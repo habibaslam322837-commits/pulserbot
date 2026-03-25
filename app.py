@@ -41,26 +41,36 @@ def ui():
     </style>
     """
 
-# ====================== DATABASE SETUP (সেফ আপডেট) ======================
+# ====================== DATABASE SETUP (সব টেবিল তৈরি) ======================
 def init_db():
     conn = db()
     c = conn.cursor()
     
-    # পুরানো টেবিল থাকলে নতুন কলাম যোগ করা
+    # users table
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
-                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT)''')
+                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
+                    username TEXT, first_name TEXT)''')
     
-    # নতুন কলাম যোগ করা (যদি না থাকে)
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN username TEXT")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN first_name TEXT")
-    except:
-        pass
+    # deposits
+    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
+                    network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
+    
+    # withdraws
+    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
+                    address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
+    
+    # messages
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
+    
+    # support
+    c.execute('''CREATE TABLE IF NOT EXISTS support (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT,
+                    type TEXT, msg TEXT)''')
     
     conn.commit()
     conn.close()
@@ -109,7 +119,6 @@ def home():
             c.execute("SELECT * FROM users WHERE id=?", (uid,))
             user = c.fetchone()
 
-    # Auto VIP + Reward
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -162,7 +171,7 @@ def home():
     <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
     </div>
 
-    <!-- Modals -->
+    <!-- Messages & VIP Modal -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -197,7 +206,7 @@ def home():
     return html
 
 # ====================== বাকি সব রুট (সম্পূর্ণ) ======================
-# (এখান থেকে শেষ পর্যন্ত সব আছে)
+# (support, admin, deposit, withdraw, deposits, withdraws, manage, add, add_reward, remove, profit, msg, broadcast, approve/reject সব আছে)
 
 @app.route("/support")
 def support():
