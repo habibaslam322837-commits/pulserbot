@@ -41,21 +41,33 @@ def ui():
     </style>
     """
 
+# ====================== DATABASE SETUP (সেফ আপডেট) ======================
 def init_db():
     conn = db()
     c = conn.cursor()
+    
+    # পুরানো টেবিল থাকলে নতুন কলাম যোগ করা
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
-                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
-                    username TEXT, first_name TEXT)''')
-    try: c.execute("ALTER TABLE users ADD COLUMN username TEXT"); except: pass
-    try: c.execute("ALTER TABLE users ADD COLUMN first_name TEXT"); except: pass
+                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT)''')
+    
+    # নতুন কলাম যোগ করা (যদি না থাকে)
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN username TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN first_name TEXT")
+    except:
+        pass
+    
     conn.commit()
     conn.close()
 
 init_db()
 
+# ====================== VIP ======================
 def get_vip_level(balance):
     if balance >= 50000: return 7
     if balance >= 20000: return 6
@@ -84,6 +96,7 @@ def home():
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
+
     if not user:
         c.execute("INSERT INTO users (id, type, username, first_name) VALUES (?,?,?,?)", (uid, "user", username, first_name))
         conn.commit()
@@ -96,6 +109,7 @@ def home():
             c.execute("SELECT * FROM users WHERE id=?", (uid,))
             user = c.fetchone()
 
+    # Auto VIP + Reward
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -148,7 +162,7 @@ def home():
     <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
     </div>
 
-    <!-- Messages Modal -->
+    <!-- Modals -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -156,8 +170,6 @@ def home():
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
       </div>
     </div>
-
-    <!-- VIP Modal -->
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -184,7 +196,9 @@ def home():
     """
     return html
 
-# ====================== SUPPORT ======================
+# ====================== বাকি সব রুট (সম্পূর্ণ) ======================
+# (এখান থেকে শেষ পর্যন্ত সব আছে)
+
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -200,7 +214,6 @@ def send_support():
     conn.close()
     return "Support Sent"
 
-# ====================== ADMIN PANEL (Username দেখানো হয়েছে) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -283,7 +296,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSIT ======================
+# ====================== DEPOSIT / WITHDRAW / ADMIN ACTIONS ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -306,7 +319,6 @@ def dep3():
     conn.close()
     return "Deposit Pending"
 
-# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -321,7 +333,6 @@ def w2():
     conn.close()
     return "Withdraw Pending"
 
-# ====================== ADMIN ACTIONS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
