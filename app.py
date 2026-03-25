@@ -14,7 +14,6 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
-# ====================== UI ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -41,7 +40,6 @@ def ui():
     </style>
     """
 
-# ====================== DATABASE SETUP (সব টেবিল) ======================
 def init_db():
     conn = db()
     c = conn.cursor()
@@ -106,7 +104,6 @@ def home():
             c.execute("SELECT * FROM users WHERE id=?", (uid,))
             user = c.fetchone()
 
-    # Auto VIP + Reward
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -193,7 +190,7 @@ def home():
     """
     return html
 
-# ====================== ACTION ROUTES (সবাই এখন Success + Back button দেখাবে) ======================
+# ====================== SUCCESS PAGES WITH BACK BUTTON ======================
 @app.route("/send_support")
 def send_support():
     uid = request.args.get("uid")
@@ -201,14 +198,14 @@ def send_support():
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
             <h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2>
-            <p class="text-xl mb-8">Your message has been sent to the admin.</p>
+            <p class="text-xl mb-8">Your message has been sent to admin.</p>
             <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
         </div>
     </div>"""
 
 @app.route("/approve_dep")
 def approve_dep():
-    uid = request.args.get("uid")  # এখানে uid পাওয়া যায় না, তাই approve_dep থেকে home এ ফিরে যাবে
+    uid = request.args.get("uid") or ADMIN_ID
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
@@ -219,7 +216,7 @@ def approve_dep():
 
 @app.route("/reject_dep")
 def reject_dep():
-    uid = request.args.get("uid")
+    uid = request.args.get("uid") or ADMIN_ID
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
@@ -230,7 +227,7 @@ def reject_dep():
 
 @app.route("/approve_w")
 def approve_w():
-    uid = request.args.get("uid")
+    uid = request.args.get("uid") or ADMIN_ID
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
@@ -241,7 +238,7 @@ def approve_w():
 
 @app.route("/reject_w")
 def reject_w():
-    uid = request.args.get("uid")
+    uid = request.args.get("uid") or ADMIN_ID
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
@@ -326,9 +323,7 @@ def reply_support():
         </div>
     </div>"""
 
-# ====================== বাকি সব রুট (আগের মতোই) ======================
-# (এখানে deposit, dep2, dep3, withdraw, w2, deposits, withdraws, manage, approve_dep, reject_dep, approve_w, reject_w সব আছে)
-
+# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -377,6 +372,90 @@ def w2():
         </div>
     </div>"""
 
+# ====================== ADMIN PANEL (Username দেখানো) ======================
+@app.route("/admin")
+def admin():
+    uid = request.args.get("id")
+    if uid != ADMIN_ID:
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
+
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, first_name, balance FROM users")
+    users = c.fetchall()
+    c.execute("SELECT * FROM support")
+    sup = c.fetchall()
+    conn.close()
+
+    badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(sup)}</span>' if sup else ''
+
+    user_list_html = ""
+    for u in users:
+        display_name = u[1] if u[1] else (u[2] if u[2] else u[0])
+        user_list_html += f"""
+        <div class="bg-[#252a31] p-4 rounded-2xl flex justify-between items-center">
+            <div>
+                <span class="font-medium text-white">@{display_name}</span><br>
+                <span class="text-emerald-400 text-sm">{u[3]} USD</span>
+            </div>
+            <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
+        </div>
+        """
+
+    support_html = ""
+    for s in sup:
+        support_html += f"""
+        <div class="card p-5">
+            <p><strong>From:</strong> @{s[2]} (ID: {s[1]})</p>
+            <p class="mt-2">{s[4]}</p>
+            <form action='/reply_support' class="mt-4">
+                <input type='hidden' name='uid' value='{s[1]}'>
+                <input name='reply' placeholder="Reply to user..." class='text-black w-full p-3 rounded mb-3'>
+                <button class='btn bg-blue-500 w-full'>Send Reply</button>
+            </form>
+        </div>
+        """
+
+    html = f"""{ui()}
+    <div class="max-w-md mx-auto p-4">
+    <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
+    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Pending Deposits</a>
+    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg'>Pending Withdraws</a>
+    <div class="card mt-6">
+        <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
+        <form action='/broadcast'>
+            <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
+            <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
+        </form>
+    </div>
+    <div class="card mt-4">
+        <h3 class="text-amber-400 mb-3">All Users</h3>
+        <div class="space-y-3">
+            {user_list_html}
+        </div>
+    </div>
+    <div onclick="openSupportModal()" class="card mt-4 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
+        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>
+        {badge}
+    </div>
+    </div>
+    <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
+      <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+        <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
+        <div class="px-6 pb-4 text-center text-xl font-semibold">Support Inbox</div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
+            {support_html or '<div class="text-center text-gray-400 py-10">No support messages yet</div>'}
+        </div>
+      </div>
+    </div>
+    <script>
+    function openSupportModal() {{ document.getElementById('supportModal').classList.remove('hidden'); document.getElementById('supportModal').classList.add('flex'); }}
+    function closeSupportModal() {{ document.getElementById('supportModal').classList.add('hidden'); document.getElementById('supportModal').classList.remove('flex'); }}
+    </script>
+    """
+    return html
+
+# ====================== DEPOSITS / WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
