@@ -37,7 +37,23 @@ def ui():
     .marquee-content {display: inline-block; animation: marquee 35s linear infinite;}
     @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
-    .profile-btn {background: linear-gradient(90deg, #facc15, #fbbf24); color: #111827; box-shadow: 0 0 30px #facc15; font-size: 1.25rem;}
+    
+    /* Profile Button - New WOW Color */
+    .profile-btn {
+        background: linear-gradient(90deg, #22d3ee, #67e8f9);
+        color: #0f172a;
+        box-shadow: 0 0 30px #22d3ee;
+        font-size: 1.25rem;
+        font-weight: 800;
+        text-shadow: 0 0 15px rgba(103, 232, 249, 0.6);
+    }
+    
+    /* Premium Text Enhancements */
+    h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
+    .text-amber-300, .text-amber-400 { text-shadow: 0 0 12px rgba(251, 191, 36, 0.7); }
+    .text-emerald-400 { text-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+    .text-purple-400 { text-shadow: 0 0 10px rgba(168, 85, 247, 0.6); }
+    .text-yellow-400 { text-shadow: 0 0 10px rgba(234, 179, 8, 0.7); }
     </style>
     """
 
@@ -149,7 +165,7 @@ def home():
     <div class="card neon text-center"><h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1></div>
     <div class="card">📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span></div>
 
-    <!-- Profile বাটন — Deposit-এর ঠিক উপরে, হলুদ গোল্ডেন -->
+    <!-- Profile বাটন — Deposit-এর ঠিক উপরে (নতুন ওয়াও সায়ান কালার) -->
     <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
 
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Deposit</a>
@@ -242,7 +258,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== বাকি সব রুট ======================
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -455,7 +471,6 @@ def reject_w():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
-# ====================== বাকি সব রুট ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
