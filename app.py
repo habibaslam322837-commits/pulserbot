@@ -73,7 +73,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== USER HOME (এখানে সিক্রেট ADMIN বাটন আছে) ======================
+# ====================== USER HOME (Admin Button শুধু তোমার জন্য) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -128,14 +128,13 @@ def home():
     vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
     messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
 
-    # 🔥 সিক্রেট ADMIN বাটন (শুধু তুমি দেখবে)
+    # 🔥 শুধু তোমার জন্য Admin Button (পার্পল বাটন)
     admin_html = ''
     if uid == ADMIN_ID:
         admin_html = f'''
-        <div onclick="window.location.href='/admin?id={uid}'" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
-            <h3 class="text-red-400 text-xl flex items-center gap-2">🔐 Admin Panel</h3>
-            <span class="text-yellow-400">→</span>
-        </div>
+        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-5 rounded-2xl font-bold text-xl shadow-lg neon">
+            🔐 Admin Panel
+        </a>
         '''
 
     html = f"""{ui()}
@@ -189,8 +188,7 @@ def home():
                 VIP4 → 5000 (500) &nbsp;&nbsp;&nbsp; 
                 VIP5 → 10000 (1000) &nbsp;&nbsp;&nbsp; 
                 VIP6 → 20000 (2000) &nbsp;&nbsp;&nbsp; 
-                VIP7 → 50000 (5000) &nbsp;&nbsp;&nbsp; 
-                Upgrade your VIP level to earn more rewards!
+                VIP7 → 50000 (5000)
             </div>
         </div>
     </div>
