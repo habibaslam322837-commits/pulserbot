@@ -12,7 +12,7 @@ TRC = "TSd1kwMavFDHJNXXqioSXWjywrEJW5Dt3U"
 ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 
 ADMIN_ID = "8671125457"
-BOT_USERNAME = "pulseofficialsbot"
+BOT_USERNAME = "pulseofficialbot"
 
 # ====================== TELEGRAM MINI APP UI ======================
 def ui():
