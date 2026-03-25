@@ -14,6 +14,7 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
+# ====================== UI ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -24,7 +25,7 @@ def ui():
     tg.ready();
     const user = tg.initDataUnsafe?.user;
     if (user && !window.location.search.includes("id=")) {
-        window.location.href = `/?id=\( {user.id}&username= \){user.username || ""}&first_name=${encodeURIComponent(user.first_name || "")}`;
+        window.location.href = '/?id=' + user.id + '&username=' + (user.username || '') + '&first_name=' + encodeURIComponent(user.first_name || '');
     }
     </script>
     <style>
@@ -40,6 +41,7 @@ def ui():
     </style>
     """
 
+# ====================== DATABASE SETUP ======================
 def init_db():
     conn = db()
     c = conn.cursor()
@@ -190,7 +192,7 @@ def home():
     """
     return html
 
-# ====================== SUCCESS PAGES WITH BACK BUTTON ======================
+# ====================== ACTION ROUTES (Success + Back button) ======================
 @app.route("/send_support")
 def send_support():
     uid = request.args.get("uid")
@@ -198,7 +200,7 @@ def send_support():
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
             <h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2>
-            <p class="text-xl mb-8">Your message has been sent to admin.</p>
+            <p class="text-xl mb-8">Your message has been sent to the admin.</p>
             <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
         </div>
     </div>"""
@@ -307,7 +309,7 @@ def broadcast():
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent to All Users</h2>
+            <h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2>
             <a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a>
         </div>
     </div>"""
