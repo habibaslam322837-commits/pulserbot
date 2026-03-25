@@ -1,7 +1,7 @@
 from flask import Flask, request
 import sqlite3
 from datetime import datetime, timedelta
-import os   # ✅ এটা আছে
+import os
 
 app = Flask(__name__)
 
@@ -12,26 +12,22 @@ TRC = "TSd1kwMavFDHJNXXqioSXWjywrEJW5Dt3U"
 ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 
 ADMIN_ID = "8671125457"
-BOT_USERNAME = "pulseofficialbot"
+BOT_USERNAME = "pulseofficialsbot"
 
 # ====================== TELEGRAM MINI APP UI ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- ✅ AUTO LOGIN -->
     <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
-
     const user = tg.initDataUnsafe?.user;
     if (user && !window.location.search.includes("id=")) {
         window.location.href = `/?id=\( {user.id}&username= \){user.username || "unknown"}`;
     }
     </script>
-
     <style>
     body {background: linear-gradient(135deg, #0a0c10, #1a1f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
     .card {background: rgba(19, 23, 31, 0.95); border: 1px solid #334155; padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.4);}
@@ -77,7 +73,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== USER HOME ======================
+# ====================== USER HOME (এখানে সিক্রেট ADMIN বাটন আছে) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -129,13 +125,22 @@ def home():
     conn.close()
 
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
-    vip_text = f"You are now VIP {user[5]} tier - Welcome to VIP{user[5]}" if user[5] > 0 else "Regular Member"
-
+    vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
     messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
+
+    # 🔥 সিক্রেট ADMIN বাটন (শুধু তুমি দেখবে)
+    admin_html = ''
+    if uid == ADMIN_ID:
+        admin_html = f'''
+        <div onclick="window.location.href='/admin?id={uid}'" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
+            <h3 class="text-red-400 text-xl flex items-center gap-2">🔐 Admin Panel</h3>
+            <span class="text-yellow-400">→</span>
+        </div>
+        '''
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="text-center mb-4 welcome">
+    <div class="text-center mb-4">
         <h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1>
     </div>
 
@@ -172,17 +177,19 @@ def home():
         <span class="text-yellow-400">→</span>
     </div>
 
+    {admin_html}
+
     <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden">
         <div class="marquee">
             <div class="marquee-content text-sm font-semibold">
                 🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; 
-                VIP1 → 500 USDT (50 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP2 → 1000 USDT (100 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP3 → 2000 USDT (200 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP4 → 5000 USDT (500 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP5 → 10000 USDT (1000 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP6 → 20000 USDT (2000 USDT add) &nbsp;&nbsp;&nbsp; 
-                VIP7 → 50000 USDT (5000 USDT add) &nbsp;&nbsp;&nbsp; 
+                VIP1 → 500 USDT (50 add) &nbsp;&nbsp;&nbsp; 
+                VIP2 → 1000 (100) &nbsp;&nbsp;&nbsp; 
+                VIP3 → 2000 (200) &nbsp;&nbsp;&nbsp; 
+                VIP4 → 5000 (500) &nbsp;&nbsp;&nbsp; 
+                VIP5 → 10000 (1000) &nbsp;&nbsp;&nbsp; 
+                VIP6 → 20000 (2000) &nbsp;&nbsp;&nbsp; 
+                VIP7 → 50000 (5000) &nbsp;&nbsp;&nbsp; 
                 Upgrade your VIP level to earn more rewards!
             </div>
         </div>
@@ -232,18 +239,7 @@ def home():
 def support():
     uid = request.args.get("id")
     username = request.args.get("username") or "unknown"
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-4">
-    <div class="card">
-    <form action='/send_support'>
-    <input type='hidden' name='uid' value='{uid}'>
-    <input type='hidden' name='username' value='{username}'>
-    <input name='msg' placeholder='Type your message...' class='text-black w-full p-3 rounded mb-3'>
-    <button class='btn bg-blue-500'>Send</button>
-    </form>
-    </div>
-    </div>
-    """
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="card"><form action='/send_support'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='username' value='{username}'><input name='msg' placeholder='Type your message...' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500'>Send</button></form></div></div>"""
 
 @app.route("/send_support")
 def send_support():
@@ -319,7 +315,6 @@ def admin():
         {badge}
     </div>
     </div>
-    <!-- Support Modal -->
     <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -336,7 +331,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSIT / WITHDRAW / ADMIN ACTIONS ======================
+# ====================== DEPOSIT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -359,6 +354,7 @@ def dep3():
     conn.close()
     return "Deposit Pending"
 
+# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -373,6 +369,7 @@ def w2():
     conn.close()
     return "Withdraw Pending"
 
+# ====================== ADMIN ACTIONS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -416,7 +413,7 @@ def manage():
     <div class="card mt-3"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
 
 @app.route("/add")
-def add(): 
+def add():
     conn = db()
     c = conn.cursor()
     c.execute("UPDATE users SET balance=balance+? WHERE id=?", (request.args.get("amount"), request.args.get("uid")))
@@ -425,7 +422,7 @@ def add():
     return "Main Balance Added"
 
 @app.route("/add_reward")
-def add_reward(): 
+def add_reward():
     conn = db()
     c = conn.cursor()
     c.execute("UPDATE users SET reward_balance=reward_balance+? WHERE id=?", (request.args.get("amount"), request.args.get("uid")))
@@ -434,7 +431,7 @@ def add_reward():
     return "Reward Balance Added"
 
 @app.route("/remove")
-def remove(): 
+def remove():
     conn = db()
     c = conn.cursor()
     c.execute("UPDATE users SET balance=balance-? WHERE id=?", (request.args.get("amount"), request.args.get("uid")))
@@ -443,7 +440,7 @@ def remove():
     return "Main Balance Removed"
 
 @app.route("/profit")
-def profit(): 
+def profit():
     uid = request.args.get("uid")
     p = float(request.args.get("p"))
     conn = db()
@@ -457,7 +454,7 @@ def profit():
     return "Profit Added"
 
 @app.route("/msg")
-def msg(): 
+def msg():
     conn = db()
     c = conn.cursor()
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (request.args.get("uid"), request.args.get("m")))
@@ -466,7 +463,7 @@ def msg():
     return "Message Sent"
 
 @app.route("/broadcast")
-def broadcast(): 
+def broadcast():
     conn = db()
     c = conn.cursor()
     c.execute("SELECT id FROM users")
