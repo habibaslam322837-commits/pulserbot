@@ -14,7 +14,7 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
-# ====================== TELEGRAM MINI APP UI ======================
+# ====================== UI ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -41,7 +41,6 @@ def ui():
     </style>
     """
 
-# ====================== DATABASE SETUP ======================
 def init_db():
     conn = db()
     c = conn.cursor()
@@ -50,21 +49,13 @@ def init_db():
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
                     username TEXT, first_name TEXT)''')
-    # Add username & first_name column if not exists
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN username TEXT")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN first_name TEXT")
-    except:
-        pass
+    try: c.execute("ALTER TABLE users ADD COLUMN username TEXT"); except: pass
+    try: c.execute("ALTER TABLE users ADD COLUMN first_name TEXT"); except: pass
     conn.commit()
     conn.close()
 
 init_db()
 
-# ====================== VIP LEVEL + BONUS ======================
 def get_vip_level(balance):
     if balance >= 50000: return 7
     if balance >= 20000: return 6
@@ -79,7 +70,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== USER HOME ======================
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -93,22 +84,18 @@ def home():
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
-
     if not user:
-        c.execute("INSERT INTO users (id, type, username, first_name) VALUES (?,?,?,?)", 
-                  (uid, "user", username, first_name))
+        c.execute("INSERT INTO users (id, type, username, first_name) VALUES (?,?,?,?)", (uid, "user", username, first_name))
         conn.commit()
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
     else:
-        # Update username/first_name if changed
         if username or first_name:
             c.execute("UPDATE users SET username=?, first_name=? WHERE id=?", (username, first_name, uid))
             conn.commit()
             c.execute("SELECT * FROM users WHERE id=?", (uid,))
             user = c.fetchone()
 
-    # Auto VIP + Reward
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -136,7 +123,6 @@ def home():
     vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
     messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
 
-    # 🔥 ADMIN BUTTON (শুধু তোমার জন্য)
     admin_html = ''
     if uid == ADMIN_ID:
         admin_html = f'''
@@ -214,7 +200,7 @@ def send_support():
     conn.close()
     return "Support Sent"
 
-# ====================== ADMIN PANEL (এখানে Username দেখানো হয়েছে) ======================
+# ====================== ADMIN PANEL (Username দেখানো হয়েছে) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -297,7 +283,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSIT / WITHDRAW / ADMIN ACTIONS ======================
+# ====================== DEPOSIT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -320,6 +306,7 @@ def dep3():
     conn.close()
     return "Deposit Pending"
 
+# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -334,6 +321,7 @@ def w2():
     conn.close()
     return "Withdraw Pending"
 
+# ====================== ADMIN ACTIONS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
