@@ -14,6 +14,7 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
+# ====================== TELEGRAM MINI APP UI ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -24,7 +25,7 @@ def ui():
     tg.ready();
     const user = tg.initDataUnsafe?.user;
     if (user && !window.location.search.includes("id=")) {
-        window.location.href = `/?id=\( {user.id}&username= \){user.username || "unknown"}`;
+        window.location.href = '/?id=' + user.id + '&username=' + (user.username || "unknown");
     }
     </script>
     <style>
@@ -67,7 +68,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME PAGE ======================
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -113,10 +114,9 @@ def home():
     vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
     messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
 
-    # 🔥 ADMIN BUTTON + DEBUG (শুধু তোমার জন্য)
+    # 🔥 ADMIN BUTTON (শুধু তোমার জন্য)
     admin_html = ''
-    is_admin = (uid == ADMIN_ID)
-    if is_admin:
+    if uid == ADMIN_ID:
         admin_html = f'''
         <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon">
             🔐 Admin Panel
@@ -175,8 +175,6 @@ def home():
     return html
 
 # ====================== বাকি সব রুট ======================
-# (support, admin, deposit, withdraw, deposits, withdraws, manage, add, add_reward, remove, profit, msg, broadcast, approve/reject সব আছে)
-
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -197,7 +195,6 @@ def admin():
     uid = request.args.get("id")
     if uid != ADMIN_ID:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
-    # ... (পুরো অ্যাডমিন প্যানেল কোড আগের মতোই আছে – আমি স্পেস বাঁচাতে এখানে শর্ট করলাম, পুরো কোডে আগের ভার্সন থেকে কপি করে নাও)
 
     conn = db()
     c = conn.cursor()
@@ -274,8 +271,6 @@ def admin():
     return html
 
 # ====================== DEPOSIT / WITHDRAW / ADMIN ACTIONS ======================
-# (আগের সব কোড একই আছে – পুরোটা কপি করা হয়েছে)
-
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
