@@ -14,7 +14,6 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
-# ====================== UI (অটো-রিডাইরেক্ট শুধু হোমে) ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -24,7 +23,6 @@ def ui():
     tg.expand();
     tg.ready();
     const user = tg.initDataUnsafe?.user;
-    // শুধু হোম পেজে অটো-রিডাইরেক্ট চলবে
     if (window.location.pathname === '/' && user && !window.location.search.includes("id=")) {
         window.location.href = '/?id=' + user.id + '&username=' + (user.username || '') + '&first_name=' + encodeURIComponent(user.first_name || '');
     }
@@ -80,7 +78,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME ======================
+# ====================== HOME (Profile বাটন যোগ করা হয়েছে) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -144,6 +142,9 @@ def home():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
+    <!-- Profile বাটন (একদম উপরে) -->
+    <a href="/profile?id={uid}" class="block mb-4 text-center text-amber-300 text-lg font-semibold flex items-center justify-center gap-2"><span class="text-2xl">👤</span> Profile</a>
+
     <div class="text-center mb-4"><h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1></div>
     <div class="flex justify-center items-center gap-2 mb-8"><span class="text-4xl">🚀</span><h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2></div>
     <div class="flex justify-end mb-3"><span class="bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold px-5 py-1 rounded-full">{vip_text}</span></div>
@@ -164,6 +165,9 @@ def home():
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
+        <div class="p-4 border-t border-gray-700">
+            <button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
+        </div>
       </div>
     </div>
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
@@ -188,11 +192,55 @@ def home():
     function closeMessagesModal() {{ document.getElementById('messagesModal').classList.add('hidden'); document.getElementById('messagesModal').classList.remove('flex'); }}
     function openVipModal() {{ document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); }}
     function closeVipModal() {{ document.getElementById('vipModal').classList.add('hidden'); document.getElementById('vipModal').classList.remove('flex'); }}
+    function markAsRead() {{
+        const uid = new URLSearchParams(window.location.search).get('id');
+        fetch('/clear_messages?id=' + uid).then(() => location.reload());
+    }}
     </script>
     """
     return html
 
-# ====================== SUPPORT ======================
+# ====================== NEW: PROFILE PAGE ======================
+@app.route("/profile")
+def profile():
+    uid = request.args.get("id")
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id=?", (uid,))
+    user = c.fetchone()
+    conn.close()
+    if not user:
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
+
+    html = f"""{ui()}
+    <div class="max-w-md mx-auto p-5 min-h-screen">
+        <div class="card">
+            <h2 class="text-amber-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
+            <div class="space-y-4 text-lg">
+                <div><strong>Main Balance:</strong> <span class="text-amber-300">{user[2]} USD</span></div>
+                <div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user[3]} USD</span></div>
+                <div><strong>Total Profit:</strong> <span class="text-emerald-400">{user[4]} USD</span></div>
+                <div><strong>Reward Balance:</strong> <span class="text-purple-400">{user[6]} USD</span></div>
+                <div><strong>VIP Level:</strong> <span class="text-yellow-400">VIP {user[5]}</span></div>
+            </div>
+        </div>
+        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a>
+    </div>
+    """
+    return html
+
+# ====================== CLEAR MESSAGES (নোটিফিকেশন রিসেট) ======================
+@app.route("/clear_messages")
+def clear_messages():
+    uid = request.args.get("id")
+    conn = db()
+    c = conn.cursor()
+    c.execute("DELETE FROM messages WHERE user_id=?", (uid,))
+    conn.commit()
+    conn.close()
+    return "Messages cleared"
+
+# ====================== বাকি সব রুট (আগের মতোই রাখা হয়েছে) ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -228,7 +276,6 @@ def send_support():
         </div>
     </div>"""
 
-# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -317,7 +364,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS & WITHDRAWS ======================
+# ====================== DEPOSITS / WITHDRAWS / APPROVE / REJECT (আগের মতোই) ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -350,7 +397,6 @@ def withdraws():
     html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>← Back to Admin Panel</a></div>"
     return html
 
-# ====================== APPROVE / REJECT ======================
 @app.route("/approve_dep")
 def approve_dep():
     id_ = request.args.get("id")
@@ -407,7 +453,7 @@ def reject_w():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
-# ====================== বাকি সব রুট ======================
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
