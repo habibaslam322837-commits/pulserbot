@@ -226,7 +226,7 @@ def send_support():
         </div>
     </div>"""
 
-# ====================== ADMIN PANEL (নতুন ফিক্স: onclick + badge) ======================
+# ====================== ADMIN PANEL (এখন <a> ট্যাগ দিয়ে ফিক্স করা) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -279,8 +279,8 @@ def admin():
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
     <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
-    <div onclick="window.location.href='/deposits'" class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center cursor-pointer'>Pending Deposits {badge_dep}</div>
-    <div onclick="window.location.href='/withdraws'" class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center cursor-pointer'>Pending Withdraws {badge_wd}</div>
+    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
+    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
     <div class="card mt-6">
         <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
         <form action='/broadcast'>
