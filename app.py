@@ -192,10 +192,35 @@ def home():
     """
     return html
 
-# ====================== ACTION ROUTES (Success + Back button) ======================
+# ====================== SUPPORT (এখন পুরোপুরি ঠিক) ======================
+@app.route("/support")
+def support():
+    uid = request.args.get("id")
+    username = request.args.get("username") or "unknown"
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen">
+    <div class="card">
+        <h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2>
+        <form action='/send_support'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input type='hidden' name='username' value='{username}'>
+            <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
+            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send Message to Admin</button>
+        </form>
+    </div>
+    </div>"""
+
 @app.route("/send_support")
 def send_support():
     uid = request.args.get("uid")
+    username = request.args.get("username") or "unknown"
+    msg = request.args.get("msg")
+    
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO support VALUES(NULL,?,?,?,?)", (uid, username, "user", msg))
+    conn.commit()
+    conn.close()
+    
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
         <div class="card">
@@ -205,127 +230,7 @@ def send_support():
         </div>
     </div>"""
 
-@app.route("/approve_dep")
-def approve_dep():
-    uid = request.args.get("uid") or ADMIN_ID
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Deposit Approved</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/reject_dep")
-def reject_dep():
-    uid = request.args.get("uid") or ADMIN_ID
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">❌ Deposit Rejected</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/approve_w")
-def approve_w():
-    uid = request.args.get("uid") or ADMIN_ID
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Approved</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/reject_w")
-def reject_w():
-    uid = request.args.get("uid") or ADMIN_ID
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/add")
-def add():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Balance Added</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/add_reward")
-def add_reward():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Reward Balance Added</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/remove")
-def remove():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Balance Removed</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/profit")
-def profit():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Profit Added</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/msg")
-def msg():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/broadcast")
-def broadcast():
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2>
-            <a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a>
-        </div>
-    </div>"""
-
-@app.route("/reply_support")
-def reply_support():
-    uid = request.args.get("uid")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-# ====================== DEPOSIT / WITHDRAW ======================
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -374,7 +279,6 @@ def w2():
         </div>
     </div>"""
 
-# ====================== ADMIN PANEL (Username দেখানো) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -457,7 +361,6 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS / WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -499,6 +402,61 @@ def manage():
     <div class="card mt-3"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="card mt-3"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
     <div class="card mt-3"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
+
+# ====================== SUCCESS PAGES ======================
+@app.route("/approve_dep")
+def approve_dep():
+    uid = request.args.get("uid") or ADMIN_ID
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Approved</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/reject_dep")
+def reject_dep():
+    uid = request.args.get("uid") or ADMIN_ID
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Deposit Rejected</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/approve_w")
+def approve_w():
+    uid = request.args.get("uid") or ADMIN_ID
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Approved</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/reject_w")
+def reject_w():
+    uid = request.args.get("uid") or ADMIN_ID
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/add")
+def add():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Balance Added</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/add_reward")
+def add_reward():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Reward Balance Added</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/remove")
+def remove():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Balance Removed</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/profit")
+def profit():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Profit Added</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/msg")
+def msg():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/broadcast")
+def broadcast():
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+
+@app.route("/reply_support")
+def reply_support():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
 # ====================== RUN ======================
 if __name__ == "__main__":
