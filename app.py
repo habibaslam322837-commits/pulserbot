@@ -25,7 +25,7 @@ def ui():
     tg.ready();
     const user = tg.initDataUnsafe?.user;
     if (user && !window.location.search.includes("id=")) {
-        window.location.href = '/?id=' + user.id + '&username=' + (user.username || "unknown");
+        window.location.href = `/?id=\( {user.id}&username= \){user.username || ""}&first_name=${encodeURIComponent(user.first_name || "")}`;
     }
     </script>
     <style>
@@ -41,19 +41,30 @@ def ui():
     </style>
     """
 
+# ====================== DATABASE SETUP ======================
 def init_db():
     conn = db()
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0, profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0, reward_balance REAL DEFAULT 0, reward_timestamp TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS deposits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL, network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL, address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS support (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT, type TEXT, msg TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
+                    profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
+                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
+                    username TEXT, first_name TEXT)''')
+    # Add username & first_name column if not exists
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN username TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN first_name TEXT")
+    except:
+        pass
     conn.commit()
     conn.close()
 
 init_db()
 
+# ====================== VIP LEVEL + BONUS ======================
 def get_vip_level(balance):
     if balance >= 50000: return 7
     if balance >= 20000: return 6
@@ -68,11 +79,12 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME ======================
+# ====================== USER HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
-    username = request.args.get("username") or "unknown"
+    username = request.args.get("username") or None
+    first_name = request.args.get("first_name") or None
 
     if not uid:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-red-400 text-2xl mb-4">⚠️ Access Denied</h2><p class="text-xl mb-6">Please start the bot first.</p><a href="https://t.me/{BOT_USERNAME}" target="_blank" class="btn bg-green-500 text-white text-lg">🚀 Start Bot Now</a></div></div>"""
@@ -81,12 +93,22 @@ def home():
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
+
     if not user:
-        c.execute("INSERT INTO users VALUES (?,?,?,?,?,?,?,?)", (uid, "user", 0, 0, 0, 0, 0, None))
+        c.execute("INSERT INTO users (id, type, username, first_name) VALUES (?,?,?,?)", 
+                  (uid, "user", username, first_name))
         conn.commit()
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
+    else:
+        # Update username/first_name if changed
+        if username or first_name:
+            c.execute("UPDATE users SET username=?, first_name=? WHERE id=?", (username, first_name, uid))
+            conn.commit()
+            c.execute("SELECT * FROM users WHERE id=?", (uid,))
+            user = c.fetchone()
 
+    # Auto VIP + Reward
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -137,10 +159,10 @@ def home():
     <div onclick="openMessagesModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
     <div onclick="openVipModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-yellow-400">→</span></div>
     {admin_html}
-    <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; VIP2 → 1000 (100) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
+    <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
     </div>
 
-    <!-- Modals -->
+    <!-- Messages Modal -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -148,6 +170,8 @@ def home():
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
       </div>
     </div>
+
+    <!-- VIP Modal -->
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -174,7 +198,7 @@ def home():
     """
     return html
 
-# ====================== বাকি সব রুট ======================
+# ====================== SUPPORT ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -190,6 +214,7 @@ def send_support():
     conn.close()
     return "Support Sent"
 
+# ====================== ADMIN PANEL (এখানে Username দেখানো হয়েছে) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -198,13 +223,26 @@ def admin():
 
     conn = db()
     c = conn.cursor()
-    c.execute("SELECT * FROM users")
+    c.execute("SELECT id, username, first_name, balance FROM users")
     users = c.fetchall()
     c.execute("SELECT * FROM support")
     sup = c.fetchall()
     conn.close()
 
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(sup)}</span>' if sup else ''
+
+    user_list_html = ""
+    for u in users:
+        display_name = u[1] if u[1] else (u[2] if u[2] else u[0])
+        user_list_html += f"""
+        <div class="bg-[#252a31] p-4 rounded-2xl flex justify-between items-center">
+            <div>
+                <span class="font-medium text-white">@{display_name}</span><br>
+                <span class="text-emerald-400 text-sm">{u[3]} USD</span>
+            </div>
+            <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
+        </div>
+        """
 
     support_html = ""
     for s in sup:
@@ -235,18 +273,7 @@ def admin():
     <div class="card mt-4">
         <h3 class="text-amber-400 mb-3">All Users</h3>
         <div class="space-y-3">
-    """
-    for u in users:
-        html += f"""
-        <div class="bg-[#252a31] p-4 rounded-2xl flex justify-between items-center">
-            <div>
-                <span class="font-medium text-white">{u[0]}</span><br>
-                <span class="text-emerald-400 text-sm">{u[2]} USD</span>
-            </div>
-            <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
-        </div>
-        """
-    html += f"""
+            {user_list_html}
         </div>
     </div>
     <div onclick="openSupportModal()" class="card mt-4 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
