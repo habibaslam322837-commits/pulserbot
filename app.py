@@ -14,6 +14,7 @@ ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
 
+# ====================== UI (অটো-রিডাইরেক্ট শুধু হোমে) ======================
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -23,7 +24,8 @@ def ui():
     tg.expand();
     tg.ready();
     const user = tg.initDataUnsafe?.user;
-    if (user && !window.location.search.includes("id=")) {
+    // শুধু হোম পেজে অটো-রিডাইরেক্ট চলবে
+    if (window.location.pathname === '/' && user && !window.location.search.includes("id=")) {
         window.location.href = '/?id=' + user.id + '&username=' + (user.username || '') + '&first_name=' + encodeURIComponent(user.first_name || '');
     }
     </script>
@@ -226,7 +228,7 @@ def send_support():
         </div>
     </div>"""
 
-# ====================== ADMIN PANEL (এখন <a> ট্যাগ দিয়ে ফিক্স করা) ======================
+# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -329,7 +331,7 @@ def deposits():
     else:
         for d in data:
             html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Network:</strong> {d[3]}</p><p><strong>TXID:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_dep?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_dep' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>Back to Admin Panel</a></div>"
+    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>← Back to Admin Panel</a></div>"
     return html
 
 @app.route("/withdraws")
@@ -345,7 +347,7 @@ def withdraws():
     else:
         for d in data:
             html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Address:</strong> {d[3]}</p><p><strong>Network:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_w?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_w' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>Back to Admin Panel</a></div>"
+    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>← Back to Admin Panel</a></div>"
     return html
 
 # ====================== APPROVE / REJECT ======================
