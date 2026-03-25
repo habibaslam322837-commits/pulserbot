@@ -226,7 +226,7 @@ def send_support():
         </div>
     </div>"""
 
-# ====================== ADMIN PANEL (নতুন ফিক্স: badge + working links) ======================
+# ====================== ADMIN PANEL (নতুন ফিক্স: onclick + badge) ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -279,8 +279,8 @@ def admin():
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
     <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
-    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
-    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
+    <div onclick="window.location.href='/deposits'" class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center cursor-pointer'>Pending Deposits {badge_dep}</div>
+    <div onclick="window.location.href='/withdraws'" class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center cursor-pointer'>Pending Withdraws {badge_wd}</div>
     <div class="card mt-6">
         <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
         <form action='/broadcast'>
@@ -315,7 +315,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS & WITHDRAWS (এখন পুরোপুরি কাজ করবে) ======================
+# ====================== DEPOSITS & WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -329,7 +329,7 @@ def deposits():
     else:
         for d in data:
             html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Network:</strong> {d[3]}</p><p><strong>TXID:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_dep?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_dep' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div></div>"
+    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>Back to Admin Panel</a></div>"
     return html
 
 @app.route("/withdraws")
@@ -345,10 +345,10 @@ def withdraws():
     else:
         for d in data:
             html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Address:</strong> {d[3]}</p><p><strong>Network:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_w?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_w' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div></div>"
+    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>Back to Admin Panel</a></div>"
     return html
 
-# ====================== APPROVE / REJECT (reason সহ) ======================
+# ====================== APPROVE / REJECT ======================
 @app.route("/approve_dep")
 def approve_dep():
     id_ = request.args.get("id")
