@@ -31,7 +31,7 @@ def ui():
     <style>
     body {background: linear-gradient(135deg, #0a0c10, #1a1f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
     .card {background: rgba(19, 23, 31, 0.95); border: 1px solid #334155; padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.4);}
-    .btn {padding: 16px; border-radius: 16px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease;}
+    .btn {padding: 18px; border-radius: 16px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease; font-size: 1.1rem;}
     .neon {box-shadow: 0 0 20px #facc15;}
     .glow {animation: glow 2s ease-in-out infinite alternate;}
     .marquee {overflow: hidden; white-space: nowrap;}
@@ -73,7 +73,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== USER HOME (Admin Button শুধু তোমার জন্য) ======================
+# ====================== USER HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -128,70 +128,30 @@ def home():
     vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
     messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
 
-    # 🔥 শুধু তোমার জন্য Admin Button (পার্পল বাটন)
+    # 🔥 ADMIN BUTTON (শুধু তোমার জন্য)
     admin_html = ''
     if uid == ADMIN_ID:
         admin_html = f'''
-        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-5 rounded-2xl font-bold text-xl shadow-lg neon">
+        <a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-violet-600 text-white neon text-2xl mt-6">
             🔐 Admin Panel
         </a>
+        <div class="text-center text-red-400 text-xs mt-1">Your UID: {uid}</div>
         '''
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="text-center mb-4">
-        <h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1>
-    </div>
-
-    <div class="flex justify-center items-center gap-2 mb-8">
-        <span class="text-4xl">🚀</span>
-        <h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2>
-    </div>
-
-    <div class="flex justify-end mb-3">
-        <span class="bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold px-5 py-1 rounded-full">{vip_text}</span>
-    </div>
-
-    <div class="card neon text-center">
-        <h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1>
-    </div>
-
-    <div class="card">
-        📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>
-        💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>
-        🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span>
-    </div>
-
+    <div class="text-center mb-4"><h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1></div>
+    <div class="flex justify-center items-center gap-2 mb-8"><span class="text-4xl">🚀</span><h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2></div>
+    <div class="flex justify-end mb-3"><span class="bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold px-5 py-1 rounded-full">{vip_text}</span></div>
+    <div class="card neon text-center"><h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1></div>
+    <div class="card">📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span></div>
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-lg'>Support</a>
-
-    <div onclick="openMessagesModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
-        <h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>
-        {badge}
-    </div>
-
-    <div onclick="openVipModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
-        <h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3>
-        <span class="text-yellow-400">→</span>
-    </div>
-
+    <div onclick="openMessagesModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
+    <div onclick="openVipModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-yellow-400">→</span></div>
     {admin_html}
-
-    <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden">
-        <div class="marquee">
-            <div class="marquee-content text-sm font-semibold">
-                🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; 
-                VIP1 → 500 USDT (50 add) &nbsp;&nbsp;&nbsp; 
-                VIP2 → 1000 (100) &nbsp;&nbsp;&nbsp; 
-                VIP3 → 2000 (200) &nbsp;&nbsp;&nbsp; 
-                VIP4 → 5000 (500) &nbsp;&nbsp;&nbsp; 
-                VIP5 → 10000 (1000) &nbsp;&nbsp;&nbsp; 
-                VIP6 → 20000 (2000) &nbsp;&nbsp;&nbsp; 
-                VIP7 → 50000 (5000)
-            </div>
-        </div>
-    </div>
+    <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 USDT (50 add) &nbsp;&nbsp;&nbsp; VIP2 → 1000 (100) &nbsp;&nbsp;&nbsp; VIP3 → 2000 (200) &nbsp;&nbsp;&nbsp; VIP4 → 5000 (500) &nbsp;&nbsp;&nbsp; VIP5 → 10000 (1000) &nbsp;&nbsp;&nbsp; VIP6 → 20000 (2000) &nbsp;&nbsp;&nbsp; VIP7 → 50000 (5000)</div></div></div>
     </div>
 
     <!-- Messages Modal -->
@@ -199,9 +159,7 @@ def home():
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
-            {messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}
-        </div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
       </div>
     </div>
 
@@ -329,7 +287,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSIT ======================
+# ====================== DEPOSIT / WITHDRAW / ADMIN ACTIONS ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -352,7 +310,6 @@ def dep3():
     conn.close()
     return "Deposit Pending"
 
-# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -367,7 +324,6 @@ def w2():
     conn.close()
     return "Withdraw Pending"
 
-# ====================== ADMIN ACTIONS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
