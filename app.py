@@ -29,14 +29,15 @@ def ui():
     </script>
     <style>
     body {background: linear-gradient(135deg, #0a0c10, #1a1f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
-    .card {background: rgba(19, 23, 31, 0.95); border: 1px solid #334155; padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.4);}
+    .card {background: rgba(19, 23, 31, 0.95); border: 1px solid #334155; padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.8);}
     .btn {padding: 18px; border-radius: 16px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease; font-size: 1.1rem;}
-    .neon {box-shadow: 0 0 20px #facc15;}
+    .neon {box-shadow: 0 0 30px #facc15;}
     .glow {animation: glow 2s ease-in-out infinite alternate;}
     .marquee {overflow: hidden; white-space: nowrap;}
     .marquee-content {display: inline-block; animation: marquee 35s linear infinite;}
-    @keyframes glow { from {text-shadow: 0 0 10px #facc15;} to {text-shadow: 0 0 25px #facc15;} }
+    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
+    .profile-btn {background: linear-gradient(90deg, #facc15, #fbbf24); color: #111827; box-shadow: 0 0 30px #facc15; font-size: 1.25rem;}
     </style>
     """
 
@@ -78,7 +79,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME (Profile বাটন একদম উপরে) ======================
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -142,16 +143,15 @@ def home():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-        <!-- 👤 Profile বাটন একদম উপরে -->
-        <a href="/profile?id={uid}" class="block mb-6 text-center text-amber-300 text-lg font-semibold flex items-center justify-center gap-2 bg-[#252a31] py-3 rounded-2xl">
-            <span class="text-3xl">👤</span> Profile
-        </a>
-
     <div class="text-center mb-4"><h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1></div>
     <div class="flex justify-center items-center gap-2 mb-8"><span class="text-4xl">🚀</span><h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2></div>
     <div class="flex justify-end mb-3"><span class="bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold px-5 py-1 rounded-full">{vip_text}</span></div>
     <div class="card neon text-center"><h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1></div>
     <div class="card">📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span></div>
+
+    <!-- Profile বাটন — Deposit-এর ঠিক উপরে, হলুদ গোল্ডেন -->
+    <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
+
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-lg'>Support</a>
@@ -161,7 +161,7 @@ def home():
     <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
     </div>
 
-    <!-- Modals (Messages + Mark as Read) -->
+    <!-- Modals -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -242,7 +242,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== বাকি সব রুট (আগের মতোই) ======================
+# ====================== বাকি সব রুট ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -366,7 +366,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS / WITHDRAWS ======================
+# ====================== DEPOSITS / WITHDRAWS / APPROVE / REJECT ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -541,6 +541,13 @@ def msg():
 
 @app.route("/broadcast")
 def broadcast():
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM users")
+    for u in c.fetchall():
+        c.execute("INSERT INTO messages VALUES(NULL,?,?)", (u[0], request.args.get("m")))
+    conn.commit()
+    conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
 @app.route("/reply_support")
