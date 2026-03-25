@@ -78,7 +78,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME (Profile বাটন যোগ করা হয়েছে) ======================
+# ====================== HOME (Profile বাটন একদম উপরে) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -142,8 +142,10 @@ def home():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <!-- Profile বাটন (একদম উপরে) -->
-    <a href="/profile?id={uid}" class="block mb-4 text-center text-amber-300 text-lg font-semibold flex items-center justify-center gap-2"><span class="text-2xl">👤</span> Profile</a>
+        <!-- 👤 Profile বাটন একদম উপরে -->
+        <a href="/profile?id={uid}" class="block mb-6 text-center text-amber-300 text-lg font-semibold flex items-center justify-center gap-2 bg-[#252a31] py-3 rounded-2xl">
+            <span class="text-3xl">👤</span> Profile
+        </a>
 
     <div class="text-center mb-4"><h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1></div>
     <div class="flex justify-center items-center gap-2 mb-8"><span class="text-4xl">🚀</span><h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2></div>
@@ -159,7 +161,7 @@ def home():
     <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modals (Messages + Mark as Read) -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -200,7 +202,7 @@ def home():
     """
     return html
 
-# ====================== NEW: PROFILE PAGE ======================
+# ====================== PROFILE PAGE ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -229,7 +231,7 @@ def profile():
     """
     return html
 
-# ====================== CLEAR MESSAGES (নোটিফিকেশন রিসেট) ======================
+# ====================== CLEAR MESSAGES ======================
 @app.route("/clear_messages")
 def clear_messages():
     uid = request.args.get("id")
@@ -240,7 +242,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== বাকি সব রুট (আগের মতোই রাখা হয়েছে) ======================
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -364,7 +366,7 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS / WITHDRAWS / APPROVE / REJECT (আগের মতোই) ======================
+# ====================== DEPOSITS / WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -453,7 +455,7 @@ def reject_w():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
-# ====================== বাকি সব রুট (আগের মতোই) ======================
+# ====================== বাকি সব রুট ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
