@@ -37,18 +37,7 @@ def ui():
     .marquee-content {display: inline-block; animation: marquee 35s linear infinite;}
     @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
-    
-    /* Profile Button - New WOW Color */
-    .profile-btn {
-        background: linear-gradient(90deg, #22d3ee, #67e8f9);
-        color: #0f172a;
-        box-shadow: 0 0 30px #22d3ee;
-        font-size: 1.25rem;
-        font-weight: 800;
-        text-shadow: 0 0 15px rgba(103, 232, 249, 0.6);
-    }
-    
-    /* Premium Text Enhancements */
+    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 30px #22d3ee; font-size: 1.25rem; font-weight: 800; text-shadow: 0 0 15px rgba(103, 232, 249, 0.6);}
     h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
     .text-amber-300, .text-amber-400 { text-shadow: 0 0 12px rgba(251, 191, 36, 0.7); }
     .text-emerald-400 { text-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
@@ -165,7 +154,6 @@ def home():
     <div class="card neon text-center"><h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1></div>
     <div class="card">📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span></div>
 
-    <!-- Profile বাটন — Deposit-এর ঠিক উপরে (নতুন ওয়াও সায়ান কালার) -->
     <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
 
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Deposit</a>
@@ -218,7 +206,7 @@ def home():
     """
     return html
 
-# ====================== PROFILE PAGE ======================
+# ====================== PROFILE & CLEAR ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -227,8 +215,7 @@ def profile():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
     conn.close()
-    if not user:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
+    if not user: return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
@@ -247,7 +234,6 @@ def profile():
     """
     return html
 
-# ====================== CLEAR MESSAGES ======================
 @app.route("/clear_messages")
 def clear_messages():
     uid = request.args.get("id")
@@ -257,6 +243,109 @@ def clear_messages():
     conn.commit()
     conn.close()
     return "Messages cleared"
+
+# ====================== MANAGE USER — এখন আসলেই কাজ করবে ======================
+@app.route("/manage")
+def manage():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-4">
+    <h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
+    
+    <div class="card">
+        <form action='/add'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input name='amount' type='number' step='0.01' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-green-500 w-full'>Add Main Balance</button>
+        </form>
+    </div>
+    
+    <div class="card mt-3">
+        <form action='/add_reward'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input name='amount' type='number' step='0.01' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-purple-500 w-full'>Add Reward Balance</button>
+        </form>
+    </div>
+    
+    <div class="card mt-3">
+        <form action='/remove'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input name='amount' type='number' step='0.01' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-red-500 w-full'>Remove Main Balance</button>
+        </form>
+    </div>
+    
+    <div class="card mt-3">
+        <form action='/profit'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input name='p' type='number' step='0.01' placeholder='Add Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-blue-500 w-full'>Add Profit %</button>
+        </form>
+    </div>
+    
+    <div class="card mt-3">
+        <form action='/msg'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea>
+            <button class='btn bg-yellow-500 text-black w-full'>Send Message</button>
+        </form>
+    </div>
+    </div>"""
+
+@app.route("/add")
+def add():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET balance = balance + ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+
+@app.route("/add_reward")
+def add_reward():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET reward_balance = reward_balance + ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Reward Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+
+@app.route("/remove")
+def remove():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET balance = balance - ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+
+@app.route("/profit")
+def profit():
+    uid = request.args.get("uid")
+    percent = float(request.args.get("p", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET total_profit = total_profit + (balance * ? / 100) WHERE id=?", (percent, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {percent}% Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+
+@app.route("/msg")
+def msg():
+    uid = request.args.get("uid")
+    message = request.args.get("m", "")
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, message))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent to User</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
 # ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/support")
@@ -519,41 +608,6 @@ def w2():
         </div>
     </div>"""
 
-@app.route("/manage")
-def manage():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
-    <div class="card"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
-    <div class="card mt-3"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
-    <div class="card mt-3"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
-    <div class="card mt-3"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
-    <div class="card mt-3"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
-
-@app.route("/add")
-def add():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Balance Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
-@app.route("/add_reward")
-def add_reward():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Reward Balance Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
-@app.route("/remove")
-def remove():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Balance Removed</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
-@app.route("/profit")
-def profit():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
-@app.route("/msg")
-def msg():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
 @app.route("/broadcast")
 def broadcast():
     conn = db()
@@ -568,6 +622,12 @@ def broadcast():
 @app.route("/reply_support")
 def reply_support():
     uid = request.args.get("uid")
+    reply = request.args.get("reply")
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Admin: {reply}"))
+    conn.commit()
+    conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
 
 # ====================== RUN ======================
