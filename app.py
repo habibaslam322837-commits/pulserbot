@@ -28,21 +28,17 @@ def ui():
     }
     </script>
     <style>
-    body {background: linear-gradient(135deg, #0a0c10, #1a1f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
-    .card {background: rgba(19, 23, 31, 0.95); border: 1px solid #334155; padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.8);}
-    .btn {padding: 18px; border-radius: 16px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease; font-size: 1.1rem;}
-    .neon {box-shadow: 0 0 30px #facc15;}
+    body {background: linear-gradient(135deg, #0f0a1f, #1a0f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
+    .glass {background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 8px 32px rgba(138,43,226,0.4); border-radius: 24px;}
+    .neon-gold {text-shadow: 0 0 20px #facc15, 0 0 40px #facc15;}
+    .neon-cyan {text-shadow: 0 0 20px #22d3ee, 0 0 40px #22d3ee;}
+    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease; font-size: 1.1rem;}
     .glow {animation: glow 2s ease-in-out infinite alternate;}
+    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
+    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 30px #22d3ee; font-size: 1.25rem; font-weight: 800;}
     .marquee {overflow: hidden; white-space: nowrap;}
     .marquee-content {display: inline-block; animation: marquee 35s linear infinite;}
-    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
-    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 30px #22d3ee; font-size: 1.25rem; font-weight: 800; text-shadow: 0 0 15px rgba(103, 232, 249, 0.6);}
-    h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
-    .text-amber-300, .text-amber-400 { text-shadow: 0 0 12px rgba(251, 191, 36, 0.7); }
-    .text-emerald-400 { text-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
-    .text-purple-400 { text-shadow: 0 0 10px rgba(168, 85, 247, 0.6); }
-    .text-yellow-400 { text-shadow: 0 0 10px rgba(234, 179, 8, 0.7); }
     </style>
     """
 
@@ -84,7 +80,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME ======================
+# ====================== HOME (নতুন লাক্সারি গ্লাস ডিজাইন) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -92,7 +88,7 @@ def home():
     first_name = request.args.get("first_name") or None
 
     if not uid:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-red-400 text-2xl mb-4">⚠️ Access Denied</h2><p class="text-xl mb-6">Please start the bot first.</p><a href="https://t.me/{BOT_USERNAME}" target="_blank" class="btn bg-green-500 text-white text-lg">🚀 Start Bot Now</a></div></div>"""
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-2xl mb-4">⚠️ Access Denied</h2><p class="text-xl mb-6">Please start the bot first.</p><a href="https://t.me/{BOT_USERNAME}" target="_blank" class="btn bg-green-500 text-white text-lg">🚀 Start Bot Now</a></div></div>"""
 
     conn = db()
     c = conn.cursor()
@@ -134,8 +130,6 @@ def home():
     conn.close()
 
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
-    vip_text = f"You are now VIP {user[5]} tier" if user[5] > 0 else "Regular Member"
-    messages_html = "".join([f'<div class="bg-[#252a31] p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs])
 
     admin_html = ''
     if uid == ADMIN_ID:
@@ -143,41 +137,47 @@ def home():
         <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon">
             🔐 Admin Panel
         </a>
-        <div class="text-center text-green-400 text-sm mt-2">✅ You are Admin (UID: {uid})</div>
         '''
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="text-center mb-4"><h1 class="text-amber-300 text-2xl font-bold glow">Make Your Day Happy with PulseForge!</h1></div>
-    <div class="flex justify-center items-center gap-2 mb-8"><span class="text-4xl">🚀</span><h2 class="text-amber-400 text-3xl font-bold tracking-widest glow">PulseForge</h2></div>
-    <div class="flex justify-end mb-3"><span class="bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold px-5 py-1 rounded-full">{vip_text}</span></div>
-    <div class="card neon text-center"><h1 class="text-5xl font-bold text-amber-300">{user[2]} USD</h1></div>
-    <div class="card">📈 Daily Profit: <span class="text-emerald-400 font-semibold">{user[3]}</span><br>💰 Total Profit: <span class="text-emerald-400 font-semibold">{user[4]}</span><br>🌟 Reward Balance: <span class="text-purple-400 font-semibold">{user[6]} USD</span></div>
-
+    <div class="flex justify-center items-center gap-3 mb-6">
+        <span class="text-5xl">🚀</span>
+        <h1 class="text-4xl font-bold neon-gold">PulseForge Nova</h1>
+    </div>
+    <div class="glass p-8 text-center mb-8">
+        <h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2>
+        <h1 class="text-6xl font-bold neon-gold">{user[2]} USD</h1>
+    </div>
     <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
-
-    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg'>Deposit</a>
-    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg'>Withdraw</a>
-    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-lg'>Support</a>
-    <div onclick="openMessagesModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
-    <div onclick="openVipModal()" class="card mt-6 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]"><h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-yellow-400">→</span></div>
+    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg mb-3'>Deposit</a>
+    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon text-lg mb-3'>Withdraw</a>
+    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon text-lg mb-3'>Support</a>
+    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
+    </div>
+    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-yellow-400">→</span>
+    </div>
     {admin_html}
-    <div class="card mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 overflow-hidden"><div class="marquee"><div class="marquee-content text-sm font-semibold">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; ... VIP7 → 50000 (5000)</div></div></div>
+    <div class="glass p-5 mt-8 text-center overflow-hidden">
+        <div class="marquee"><div class="marquee-content text-sm font-semibold text-white/80">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; VIP7 → 50000 (5000)</div></div>
+    </div>
     </div>
 
-    <!-- Modals -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{messages_html or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
         <div class="p-4 border-t border-gray-700">
             <button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
         </div>
       </div>
     </div>
+
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">🎁 VIP Rewards Program</div>
         <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-6 text-white text-sm">
@@ -206,7 +206,7 @@ def home():
     """
     return html
 
-# ====================== PROFILE & CLEAR ======================
+# ====================== PROFILE ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -219,7 +219,7 @@ def profile():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-        <div class="card">
+        <div class="glass p-8 rounded-3xl">
             <h2 class="text-amber-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
             <div class="space-y-4 text-lg">
                 <div><strong>Main Balance:</strong> <span class="text-amber-300">{user[2]} USD</span></div>
@@ -244,53 +244,16 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE USER — এখন আসলেই কাজ করবে ======================
+# ====================== MANAGE + ACTION ROUTES ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4">
-    <h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
-    
-    <div class="card">
-        <form action='/add'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input name='amount' type='number' step='0.01' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-green-500 w-full'>Add Main Balance</button>
-        </form>
-    </div>
-    
-    <div class="card mt-3">
-        <form action='/add_reward'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input name='amount' type='number' step='0.01' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-purple-500 w-full'>Add Reward Balance</button>
-        </form>
-    </div>
-    
-    <div class="card mt-3">
-        <form action='/remove'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input name='amount' type='number' step='0.01' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-red-500 w-full'>Remove Main Balance</button>
-        </form>
-    </div>
-    
-    <div class="card mt-3">
-        <form action='/profit'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input name='p' type='number' step='0.01' placeholder='Add Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-blue-500 w-full'>Add Profit %</button>
-        </form>
-    </div>
-    
-    <div class="card mt-3">
-        <form action='/msg'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea>
-            <button class='btn bg-yellow-500 text-black w-full'>Send Message</button>
-        </form>
-    </div>
-    </div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
+    <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
 
 @app.route("/add")
 def add():
@@ -301,7 +264,7 @@ def add():
     c.execute("UPDATE users SET balance = balance + ? WHERE id=?", (amount, uid))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/add_reward")
 def add_reward():
@@ -312,7 +275,7 @@ def add_reward():
     c.execute("UPDATE users SET reward_balance = reward_balance + ? WHERE id=?", (amount, uid))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Reward Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/remove")
 def remove():
@@ -323,7 +286,7 @@ def remove():
     c.execute("UPDATE users SET balance = balance - ? WHERE id=?", (amount, uid))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Balance</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/profit")
 def profit():
@@ -334,7 +297,7 @@ def profit():
     c.execute("UPDATE users SET total_profit = total_profit + (balance * ? / 100) WHERE id=?", (percent, uid))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ {percent}% Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {percent}% Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/msg")
 def msg():
@@ -345,21 +308,21 @@ def msg():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, message))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent to User</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-# ====================== বাকি সব রুট (আগের মতোই) ======================
+# ====================== SUPPORT ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
     username = request.args.get("username") or "unknown"
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="card">
+    <div class="glass p-8 rounded-3xl">
         <h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2>
         <form action='/send_support'>
             <input type='hidden' name='uid' value='{uid}'>
             <input type='hidden' name='username' value='{username}'>
             <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
-            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send Message to Admin</button>
+            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send to Admin</button>
         </form>
     </div>
     </div>"""
@@ -374,20 +337,14 @@ def send_support():
     c.execute("INSERT INTO support VALUES(NULL,?,?,?,?)", (uid, username, "user", msg))
     conn.commit()
     conn.close()
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2>
-            <p class="text-xl mb-8">Your message has been sent to the admin.</p>
-            <a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
     if uid != ADMIN_ID:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
 
     conn = db()
     c = conn.cursor()
@@ -405,63 +362,48 @@ def admin():
     badge_dep = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_dep}</span>' if pending_dep > 0 else ''
     badge_wd = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_wd}</span>' if pending_wd > 0 else ''
 
-    user_list_html = ""
-    for u in users:
-        display_name = u[1] if u[1] else (u[2] if u[2] else u[0])
-        user_list_html += f"""
-        <div class="bg-[#252a31] p-4 rounded-2xl flex justify-between items-center">
-            <div>
-                <span class="font-medium text-white">@{display_name}</span><br>
-                <span class="text-emerald-400 text-sm">{u[3]} USD</span>
-            </div>
-            <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
-        </div>
-        """
+    user_list_html = "".join([f"""
+    <div class="glass p-4 rounded-2xl flex justify-between items-center">
+        <div><span class="font-medium text-white">@{u[1] or u[2] or u[0]}</span><br><span class="text-emerald-400 text-sm">{u[3]} USD</span></div>
+        <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
+    </div>""" for u in users])
 
-    support_html = ""
-    for s in sup:
-        support_html += f"""
-        <div class="card p-5">
-            <p><strong>From:</strong> @{s[2]} (ID: {s[1]})</p>
-            <p class="mt-2">{s[4]}</p>
-            <form action='/reply_support' class="mt-4">
-                <input type='hidden' name='uid' value='{s[1]}'>
-                <input name='reply' placeholder="Reply to user..." class='text-black w-full p-3 rounded mb-3'>
-                <button class='btn bg-blue-500 w-full'>Send Reply</button>
-            </form>
-        </div>
-        """
+    support_html = "".join([f"""
+    <div class="glass p-5">
+        <p><strong>From:</strong> @{s[2]} (ID: {s[1]})</p>
+        <p class="mt-2">{s[4]}</p>
+        <form action='/reply_support' class="mt-4">
+            <input type='hidden' name='uid' value='{s[1]}'>
+            <input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-blue-500 w-full'>Send Reply</button>
+        </form>
+    </div>""" for s in sup])
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
     <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
     <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
     <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
-    <div class="card mt-6">
+    <div class="glass mt-6 p-6">
         <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
         <form action='/broadcast'>
             <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
             <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
         </form>
     </div>
-    <div class="card mt-4">
+    <div class="glass mt-4 p-6">
         <h3 class="text-amber-400 mb-3">All Users</h3>
-        <div class="space-y-3">
-            {user_list_html}
-        </div>
+        <div class="space-y-3">{user_list_html}</div>
     </div>
-    <div onclick="openSupportModal()" class="card mt-4 flex items-center justify-between cursor-pointer hover:bg-[#1f2937]">
-        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>
-        {badge_support}
+    <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
     </div>
     </div>
     <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="bg-[#13171f] w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Support Inbox</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
-            {support_html or '<div class="text-center text-gray-400 py-10">No support messages yet</div>'}
-        </div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{support_html or '<div class="text-center text-gray-400 py-10">No support messages yet</div>'}</div>
       </div>
     </div>
     <script>
@@ -471,7 +413,43 @@ def admin():
     """
     return html
 
-# ====================== DEPOSITS / WITHDRAWS / APPROVE / REJECT ======================
+# ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
+@app.route("/deposit")
+def deposit():
+    uid = request.args.get("id")
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Next</button></form></div></div>"""
+
+@app.route("/dep2")
+def dep2():
+    uid = request.args.get("uid")
+    net = request.args.get("network")
+    amount = request.args.get("amount")
+    addr = TRC if net == "TRC20" else ERC
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Submit</button></form></div></div>"""
+
+@app.route("/dep3")
+def dep3():
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO deposits VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("network"), request.args.get("txid"), "pending", ""))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+@app.route("/withdraw")
+def withdraw():
+    uid = request.args.get("id")
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/w2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><input name='address' placeholder='Wallet Address' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white'>Submit</button></form></div></div>"""
+
+@app.route("/w2")
+def w2():
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO withdraws VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("address"), request.args.get("network"), "pending", ""))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -479,14 +457,8 @@ def deposits():
     c.execute("SELECT id, user_id, amount, network, txid FROM deposits WHERE status='pending'")
     data = c.fetchall()
     conn.close()
-    html = f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Deposits</h2><div class="space-y-4">"""
-    if not data:
-        html += "<div class='text-center py-10 text-gray-400'>No pending deposits yet</div>"
-    else:
-        for d in data:
-            html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Network:</strong> {d[3]}</p><p><strong>TXID:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_dep?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_dep' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>← Back to Admin Panel</a></div>"
-    return html
+    items = "".join([f"""<div class="glass p-5"><p><strong>User:</strong> {d[1]}</p><p><strong>Amount:</strong> {d[2]} USD</p><p><strong>Network:</strong> {d[3]}</p><p><strong>TXID:</strong> {d[4]}</p><div class="flex gap-3 mt-5"><a href='/approve_dep?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_dep' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reason" class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Reject</button></form></div></div>""" for d in data])
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Deposits</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending deposits</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
 
 @app.route("/withdraws")
 def withdraws():
@@ -495,14 +467,8 @@ def withdraws():
     c.execute("SELECT id, user_id, amount, address, network FROM withdraws WHERE status='pending'")
     data = c.fetchall()
     conn.close()
-    html = f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Withdraws</h2><div class="space-y-4">"""
-    if not data:
-        html += "<div class='text-center py-10 text-gray-400'>No pending withdraws yet</div>"
-    else:
-        for d in data:
-            html += f"""<div class="card p-5"><p class="text-white"><strong>User ID:</strong> {d[1]}</p><p class="text-emerald-400"><strong>Amount:</strong> {d[2]} USD</p><p><strong>Address:</strong> {d[3]}</p><p><strong>Network:</strong> {d[4]}</p><div class="mt-5 flex gap-3"><a href='/approve_w?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_w' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reject reason..." class='text-black w-full mb-3 p-3 rounded'><button type='submit' class='btn bg-red-500 w-full'>Reject</button></form></div></div>"""
-    html += "</div><a href='/admin?id={ADMIN_ID}' class='btn bg-gray-500 text-white mt-6'>← Back to Admin Panel</a></div>"
-    return html
+    items = "".join([f"""<div class="glass p-5"><p><strong>User:</strong> {d[1]}</p><p><strong>Amount:</strong> {d[2]} USD</p><p><strong>Address:</strong> {d[3]}</p><p><strong>Network:</strong> {d[4]}</p><div class="flex gap-3 mt-5"><a href='/approve_w?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_w' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reason" class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Reject</button></form></div></div>""" for d in data])
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Withdraws</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending withdraws</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
 
 @app.route("/approve_dep")
 def approve_dep():
@@ -516,7 +482,7 @@ def approve_dep():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (d[0], f"Deposit Approved {d[1]} USD"))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Approved</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Approved</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/reject_dep")
 def reject_dep():
@@ -530,7 +496,7 @@ def reject_dep():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Deposit Rejected: {reason}"))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Deposit Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">❌ Deposit Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/approve_w")
 def approve_w():
@@ -544,7 +510,7 @@ def approve_w():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (w[0], f"Withdraw Approved {w[1]} USD"))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Approved</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Approved</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/reject_w")
 def reject_w():
@@ -558,55 +524,7 @@ def reject_w():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Withdraw Rejected: {reason}"))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
-
-@app.route("/deposit")
-def deposit():
-    uid = request.args.get("id")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="card"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Next</button></form></div></div>"""
-
-@app.route("/dep2")
-def dep2():
-    uid = request.args.get("uid")
-    net = request.args.get("network")
-    amount = request.args.get("amount")
-    addr = TRC if net == "TRC20" else ERC
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="card">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Submit</button></form></div></div>"""
-
-@app.route("/dep3")
-def dep3():
-    conn = db()
-    c = conn.cursor()
-    c.execute("INSERT INTO deposits VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("network"), request.args.get("txid"), "pending", ""))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2>
-            <a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
-
-@app.route("/withdraw")
-def withdraw():
-    uid = request.args.get("id")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="card"><form action='/w2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><input name='address' placeholder='Wallet Address' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white'>Submit</button></form></div></div>"""
-
-@app.route("/w2")
-def w2():
-    conn = db()
-    c = conn.cursor()
-    c.execute("INSERT INTO withdraws VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("address"), request.args.get("network"), "pending", ""))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center">
-        <div class="card">
-            <h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2>
-            <a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a>
-        </div>
-    </div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">❌ Withdraw Rejected</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/broadcast")
 def broadcast():
@@ -617,7 +535,7 @@ def broadcast():
         c.execute("INSERT INTO messages VALUES(NULL,?,?)", (u[0], request.args.get("m")))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/reply_support")
 def reply_support():
@@ -628,7 +546,7 @@ def reply_support():
     c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Admin: {reply}"))
     conn.commit()
     conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="card"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin Panel</a></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 # ====================== RUN ======================
 if __name__ == "__main__":
