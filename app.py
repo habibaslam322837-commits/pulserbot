@@ -80,7 +80,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME ======================
+# ====================== HOME (Daily Profit + Total Profit ফিরিয়ে দিয়েছি) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -149,10 +149,28 @@ def home():
         <h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2>
         <h1 class="text-6xl font-bold neon-gold">{user[2]} USD</h1>
     </div>
+
+    <!-- Daily + Total Profit + Reward (সুন্দর গ্লাস কার্ডে ফিরিয়ে দিয়েছি) -->
+    <div class="glass p-6 mb-8">
+        <div class="flex justify-between text-lg mb-3">
+            <div>📈 <strong>Daily Profit</strong></div>
+            <div class="text-emerald-400 font-semibold">{user[3]} USD</div>
+        </div>
+        <div class="flex justify-between text-lg mb-3">
+            <div>💰 <strong>Total Profit</strong></div>
+            <div class="text-emerald-400 font-semibold">{user[4]} USD</div>
+        </div>
+        <div class="flex justify-between text-lg">
+            <div>🌟 <strong>Reward Balance</strong></div>
+            <div class="text-purple-400 font-semibold">{user[6]} USD</div>
+        </div>
+    </div>
+
     <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg mb-3'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon text-lg mb-3'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon text-lg mb-3'>Support</a>
+
     <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
         <h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
     </div>
@@ -165,6 +183,7 @@ def home():
     </div>
     </div>
 
+    <!-- Modals (আগের মতোই) -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -206,7 +225,7 @@ def home():
     """
     return html
 
-# ====================== বাকি সব রুট (একদম আগের মতোই) ======================
+# ====================== বাকি সব রুট (একদম আগের মতোই কাজ করবে) ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
