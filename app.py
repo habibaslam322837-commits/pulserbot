@@ -46,22 +46,28 @@ def ui():
 def init_db():
     conn = db()
     c = conn.cursor()
+    # USERS TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN registered INTEGER DEFAULT 0")
-        c.execute("ALTER TABLE users ADD COLUMN name TEXT")
-        c.execute("ALTER TABLE users ADD COLUMN email TEXT")
-        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
-        c.execute("ALTER TABLE users ADD COLUMN country_code TEXT")
-        c.execute("ALTER TABLE users ADD COLUMN address TEXT")
-        c.execute("ALTER TABLE users ADD COLUMN referral_code TEXT")
-    except:
-        pass
+    # DEPOSITS TABLE
+    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
+                    network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
+    # WITHDRAWS TABLE
+    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
+                    address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
+    # MESSAGES TABLE
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
+    # SUPPORT TABLE
+    c.execute('''CREATE TABLE IF NOT EXISTS support (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT,
+                    type TEXT, msg TEXT)''')
     conn.commit()
     conn.close()
 
@@ -156,10 +162,10 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[10] == 0:  # registered = 0
+    if user[10] == 0:  # registered column
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-amber-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon text-xl">Complete Registration</a></div></div>"""
 
-    # Dashboard
+    # VIP & Reward logic
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -495,7 +501,7 @@ def all_user_info():
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
-# ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
+# ====================== DEPOSIT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -518,6 +524,7 @@ def dep3():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -532,6 +539,7 @@ def w2():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== PENDING DEPOSITS / WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
