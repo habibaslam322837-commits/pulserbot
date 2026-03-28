@@ -29,15 +29,16 @@ def ui():
     </script>
     <style>
     body {background: linear-gradient(135deg, #0f0a1f, #1a0f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
-    .glass {background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 8px 32px rgba(138,43,226,0.4); border-radius: 24px;}
-    .neon-gold {text-shadow: 0 0 20px #facc15, 0 0 40px #facc15;}
-    .neon-cyan {text-shadow: 0 0 20px #22d3ee, 0 0 40px #22d3ee;}
-    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.3s ease; font-size: 1.1rem;}
+    .diamond-glass {background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03)); backdrop-filter: blur(30px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 0 45px rgba(234,179,8,0.7), inset 0 0 25px rgba(255,255,255,0.5); border-radius: 28px;}
+    .neon-gold {text-shadow: 0 0 25px #facc15, 0 0 55px #facc15;}
+    .neon-cyan {text-shadow: 0 0 25px #22d3ee, 0 0 55px #22d3ee;}
+    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1.15rem; box-shadow: 0 0 30px rgba(234,179,8,0.6);}
+    .btn:hover {transform: scale(1.08); box-shadow: 0 0 50px rgba(234,179,8,0.9);}
     .glow {animation: glow 2s ease-in-out infinite alternate;}
-    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 35px #facc15;} }
-    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 30px #22d3ee; font-size: 1.25rem; font-weight: 800;}
+    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 50px #facc15;} }
+    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 40px #22d3ee; font-size: 1.3rem; font-weight: 800;}
     .marquee {overflow: hidden; white-space: nowrap;}
-    .marquee-content {display: inline-block; animation: marquee 35s linear infinite;}
+    .marquee-content {display: inline-block; animation: marquee 30s linear infinite;}
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
     </style>
     """
@@ -49,18 +50,18 @@ def init_db():
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
-                    username TEXT, first_name TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
-                    network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
-                    address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS support (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT,
-                    type TEXT, msg TEXT)''')
+                    username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
+                    country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN registered INTEGER DEFAULT 0")
+        c.execute("ALTER TABLE users ADD COLUMN name TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN country_code TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN address TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN referral_code TEXT")
+    except:
+        pass
     conn.commit()
     conn.close()
 
@@ -80,7 +81,64 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== HOME (Daily Profit + Total Profit ফিরিয়ে দিয়েছি) ======================
+# ====================== REGISTRATION PAGE (ঠিক তোমার ছবির মতো) ======================
+@app.route("/register")
+def register():
+    uid = request.args.get("id")
+    username = request.args.get("username") or ""
+    first_name = request.args.get("first_name") or ""
+    return f"""{ui()}
+    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center">
+        <div class="diamond-glass p-8 rounded-3xl w-full">
+            <div class="flex justify-center items-center gap-3 mb-6">
+                <span class="text-5xl">🚀</span>
+                <h1 class="text-4xl font-bold neon-gold">PulseForge Smart Savings</h1>
+            </div>
+            <form action="/register_submit" class="space-y-5">
+                <input type="hidden" name="uid" value="{uid}">
+                <input type="text" name="name" placeholder="Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60">
+                <input type="email" name="email" placeholder="Email" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60">
+                <div class="flex gap-3">
+                    <select name="country_code" class="w-1/3 p-4 rounded-2xl bg-white/10 text-white" required>
+                        <option value="" disabled selected>Select country</option>
+                        <option value="+880">🇧🇩 +880</option>
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+966">🇸🇦 +966</option>
+                    </select>
+                    <input type="tel" name="phone" placeholder="Phone Number" required class="flex-1 p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60">
+                </div>
+                <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60"></textarea>
+                <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="agree" name="agree" required class="w-5 h-5 accent-cyan-400">
+                    <label for="agree" class="text-sm">I agree to the Terms and Conditions</label>
+                </div>
+                <button type="submit" class="btn w-full bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon">Register Now</button>
+            </form>
+        </div>
+    </div>"""
+
+@app.route("/register_submit")
+def register_submit():
+    uid = request.args.get("uid")
+    name = request.args.get("name")
+    email = request.args.get("email")
+    country_code = request.args.get("country_code")
+    phone = request.args.get("phone")
+    address = request.args.get("address")
+    referral_code = request.args.get("referral_code") or ""
+    conn = db()
+    c = conn.cursor()
+    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 
+                 WHERE id=?""", (name, email, country_code, phone, address, referral_code, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
+
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -99,13 +157,12 @@ def home():
         conn.commit()
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
-    else:
-        if username or first_name:
-            c.execute("UPDATE users SET username=?, first_name=? WHERE id=?", (username, first_name, uid))
-            conn.commit()
-            c.execute("SELECT * FROM users WHERE id=?", (uid,))
-            user = c.fetchone()
 
+    # Registration check
+    if user[10] == 0:  # registered column
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-amber-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon text-xl">Complete Registration</a></div></div>"""
+
+    # Dashboard
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -149,28 +206,15 @@ def home():
         <h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2>
         <h1 class="text-6xl font-bold neon-gold">{user[2]} USD</h1>
     </div>
-
-    <!-- Daily + Total Profit + Reward (সুন্দর গ্লাস কার্ডে ফিরিয়ে দিয়েছি) -->
     <div class="glass p-6 mb-8">
-        <div class="flex justify-between text-lg mb-3">
-            <div>📈 <strong>Daily Profit</strong></div>
-            <div class="text-emerald-400 font-semibold">{user[3]} USD</div>
-        </div>
-        <div class="flex justify-between text-lg mb-3">
-            <div>💰 <strong>Total Profit</strong></div>
-            <div class="text-emerald-400 font-semibold">{user[4]} USD</div>
-        </div>
-        <div class="flex justify-between text-lg">
-            <div>🌟 <strong>Reward Balance</strong></div>
-            <div class="text-purple-400 font-semibold">{user[6]} USD</div>
-        </div>
+        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user[3]} USD</div></div>
+        <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user[4]} USD</div></div>
+        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{user[6]} USD</div></div>
     </div>
-
     <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg mb-3'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon text-lg mb-3'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon text-lg mb-3'>Support</a>
-
     <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
         <h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
     </div>
@@ -183,7 +227,6 @@ def home():
     </div>
     </div>
 
-    <!-- Modals (আগের মতোই) -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
@@ -225,7 +268,104 @@ def home():
     """
     return html
 
-# ====================== বাকি সব রুট (একদম আগের মতোই কাজ করবে) ======================
+# ====================== ADMIN PANEL (New All User Info Button) ======================
+@app.route("/admin")
+def admin():
+    uid = request.args.get("id")
+    if uid != ADMIN_ID:
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
+
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, first_name, balance FROM users")
+    users = c.fetchall()
+    c.execute("SELECT * FROM support")
+    sup = c.fetchall()
+    c.execute("SELECT COUNT(*) FROM deposits WHERE status='pending'")
+    pending_dep = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM withdraws WHERE status='pending'")
+    pending_wd = c.fetchone()[0]
+    conn.close()
+
+    badge_support = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(sup)}</span>' if sup else ''
+    badge_dep = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_dep}</span>' if pending_dep > 0 else ''
+    badge_wd = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_wd}</span>' if pending_wd > 0 else ''
+
+    user_list_html = "".join([f"""
+    <div class="glass p-4 rounded-2xl flex justify-between items-center">
+        <div><span class="font-medium text-white">@{u[1] or u[2] or u[0]}</span><br><span class="text-emerald-400 text-sm">{u[3]} USD</span></div>
+        <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
+    </div>""" for u in users])
+
+    support_html = "".join([f"""
+    <div class="glass p-5">
+        <p><strong>From:</strong> @{s[2]} (ID: {s[1]})</p>
+        <p class="mt-2">{s[4]}</p>
+        <form action='/reply_support' class="mt-4">
+            <input type='hidden' name='uid' value='{s[1]}'>
+            <input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'>
+            <button class='btn bg-blue-500 w-full'>Send Reply</button>
+        </form>
+    </div>""" for s in sup])
+
+    html = f"""{ui()}
+    <div class="max-w-md mx-auto p-4">
+    <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
+    <a href='/all_user_info' class='btn bg-gradient-to-r from-cyan-400 to-blue-500 text-white neon text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
+    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
+    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
+    <div class="glass mt-6 p-6">
+        <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
+        <form action='/broadcast'>
+            <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
+            <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
+        </form>
+    </div>
+    <div class="glass mt-4 p-6">
+        <h3 class="text-amber-400 mb-3">All Users</h3>
+        <div class="space-y-3">{user_list_html}</div>
+    </div>
+    <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
+    </div>
+    </div>
+    <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
+      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+        <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
+        <div class="px-6 pb-4 text-center text-xl font-semibold">Support Inbox</div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{support_html or '<div class="text-center text-gray-400 py-10">No support messages yet</div>'}</div>
+      </div>
+    </div>
+    <script>
+    function openSupportModal() {{ document.getElementById('supportModal').classList.remove('hidden'); document.getElementById('supportModal').classList.add('flex'); }}
+    function closeSupportModal() {{ document.getElementById('supportModal').classList.add('hidden'); document.getElementById('supportModal').classList.remove('flex'); }}
+    </script>
+    """
+    return html
+
+@app.route("/all_user_info")
+def all_user_info():
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT id, name, email, phone, country_code, address, referral_code, balance FROM users WHERE registered=1")
+    users = c.fetchall()
+    conn.close()
+    user_html = "".join([f"""
+    <div class="glass p-5 mb-4">
+        <p><strong>ID:</strong> {u[0]}</p>
+        <p><strong>Name:</strong> {u[1] or 'N/A'}</p>
+        <p><strong>Email:</strong> {u[2] or 'N/A'}</p>
+        <p><strong>Phone:</strong> {u[3] or 'N/A'}</p>
+        <p><strong>Address:</strong> {u[5] or 'N/A'}</p>
+        <p><strong>Balance:</strong> {u[7]} USD</p>
+    </div>""" for u in users])
+    return f"""{ui()}<div class="max-w-md mx-auto p-4">
+    <h2 class="text-amber-400 text-center text-3xl mb-6">👥 All User Information</h2>
+    <div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div>
+    <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
+    </div>"""
+
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -356,78 +496,27 @@ def send_support():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-@app.route("/admin")
-def admin():
-    uid = request.args.get("id")
-    if uid != ADMIN_ID:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-3xl mb-4">🚫 Access Denied</h2><p class="text-xl">Only Admin can access this panel.</p></div></div>"""
-
+@app.route("/broadcast")
+def broadcast():
     conn = db()
     c = conn.cursor()
-    c.execute("SELECT id, username, first_name, balance FROM users")
-    users = c.fetchall()
-    c.execute("SELECT * FROM support")
-    sup = c.fetchall()
-    c.execute("SELECT COUNT(*) FROM deposits WHERE status='pending'")
-    pending_dep = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM withdraws WHERE status='pending'")
-    pending_wd = c.fetchone()[0]
+    c.execute("SELECT id FROM users")
+    for u in c.fetchall():
+        c.execute("INSERT INTO messages VALUES(NULL,?,?)", (u[0], request.args.get("m")))
+    conn.commit()
     conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-    badge_support = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(sup)}</span>' if sup else ''
-    badge_dep = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_dep}</span>' if pending_dep > 0 else ''
-    badge_wd = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_wd}</span>' if pending_wd > 0 else ''
-
-    user_list_html = "".join([f"""
-    <div class="glass p-4 rounded-2xl flex justify-between items-center">
-        <div><span class="font-medium text-white">@{u[1] or u[2] or u[0]}</span><br><span class="text-emerald-400 text-sm">{u[3]} USD</span></div>
-        <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
-    </div>""" for u in users])
-
-    support_html = "".join([f"""
-    <div class="glass p-5">
-        <p><strong>From:</strong> @{s[2]} (ID: {s[1]})</p>
-        <p class="mt-2">{s[4]}</p>
-        <form action='/reply_support' class="mt-4">
-            <input type='hidden' name='uid' value='{s[1]}'>
-            <input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-blue-500 w-full'>Send Reply</button>
-        </form>
-    </div>""" for s in sup])
-
-    html = f"""{ui()}
-    <div class="max-w-md mx-auto p-4">
-    <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
-    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
-    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
-    <div class="glass mt-6 p-6">
-        <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
-        <form action='/broadcast'>
-            <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
-            <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
-        </form>
-    </div>
-    <div class="glass mt-4 p-6">
-        <h3 class="text-amber-400 mb-3">All Users</h3>
-        <div class="space-y-3">{user_list_html}</div>
-    </div>
-    <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
-    </div>
-    </div>
-    <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
-        <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
-        <div class="px-6 pb-4 text-center text-xl font-semibold">Support Inbox</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{support_html or '<div class="text-center text-gray-400 py-10">No support messages yet</div>'}</div>
-      </div>
-    </div>
-    <script>
-    function openSupportModal() {{ document.getElementById('supportModal').classList.remove('hidden'); document.getElementById('supportModal').classList.add('flex'); }}
-    function closeSupportModal() {{ document.getElementById('supportModal').classList.add('hidden'); document.getElementById('supportModal').classList.remove('flex'); }}
-    </script>
-    """
-    return html
+@app.route("/reply_support")
+def reply_support():
+    uid = request.args.get("uid")
+    reply = request.args.get("reply")
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Admin: {reply}"))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 # ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
 @app.route("/deposit")
