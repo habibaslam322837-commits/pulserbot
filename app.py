@@ -81,12 +81,10 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (ঠিক তোমার ছবির মতো) ======================
+# ====================== REGISTRATION PAGE ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
-    username = request.args.get("username") or ""
-    first_name = request.args.get("first_name") or ""
     return f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center">
         <div class="diamond-glass p-8 rounded-3xl w-full">
@@ -132,8 +130,8 @@ def register_submit():
     referral_code = request.args.get("referral_code") or ""
     conn = db()
     c = conn.cursor()
-    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 
-                 WHERE id=?""", (name, email, country_code, phone, address, referral_code, uid))
+    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 WHERE id=?""", 
+              (name, email, country_code, phone, address, referral_code, uid))
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
@@ -158,8 +156,7 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # Registration check
-    if user[10] == 0:  # registered column
+    if user[10] == 0:  # registered = 0
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-amber-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon text-xl">Complete Registration</a></div></div>"""
 
     # Dashboard
@@ -268,7 +265,140 @@ def home():
     """
     return html
 
-# ====================== ADMIN PANEL (New All User Info Button) ======================
+# ====================== PROFILE ======================
+@app.route("/profile")
+def profile():
+    uid = request.args.get("id")
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id=?", (uid,))
+    user = c.fetchone()
+    conn.close()
+    if not user: return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
+
+    html = f"""{ui()}
+    <div class="max-w-md mx-auto p-5 min-h-screen">
+        <div class="glass p-8 rounded-3xl">
+            <h2 class="text-amber-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
+            <div class="space-y-4 text-lg">
+                <div><strong>Main Balance:</strong> <span class="text-amber-300">{user[2]} USD</span></div>
+                <div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user[3]} USD</span></div>
+                <div><strong>Total Profit:</strong> <span class="text-emerald-400">{user[4]} USD</span></div>
+                <div><strong>Reward Balance:</strong> <span class="text-purple-400">{user[6]} USD</span></div>
+                <div><strong>VIP Level:</strong> <span class="text-yellow-400">VIP {user[5]}</span></div>
+            </div>
+        </div>
+        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a>
+    </div>
+    """
+    return html
+
+@app.route("/clear_messages")
+def clear_messages():
+    uid = request.args.get("id")
+    conn = db()
+    c = conn.cursor()
+    c.execute("DELETE FROM messages WHERE user_id=?", (uid,))
+    conn.commit()
+    conn.close()
+    return "Messages cleared"
+
+# ====================== MANAGE ======================
+@app.route("/manage")
+def manage():
+    uid = request.args.get("uid")
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
+    <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
+
+@app.route("/add")
+def add():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET balance = balance + ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/add_reward")
+def add_reward():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET reward_balance = reward_balance + ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/remove")
+def remove():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET balance = balance - ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/profit")
+def profit():
+    uid = request.args.get("uid")
+    percent = float(request.args.get("p", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET total_profit = total_profit + (balance * ? / 100) WHERE id=?", (percent, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {percent}% Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/msg")
+def msg():
+    uid = request.args.get("uid")
+    message = request.args.get("m", "")
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, message))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+# ====================== SUPPORT ======================
+@app.route("/support")
+def support():
+    uid = request.args.get("id")
+    username = request.args.get("username") or "unknown"
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen">
+    <div class="glass p-8 rounded-3xl">
+        <h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2>
+        <form action='/send_support'>
+            <input type='hidden' name='uid' value='{uid}'>
+            <input type='hidden' name='username' value='{username}'>
+            <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
+            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send to Admin</button>
+        </form>
+    </div>
+    </div>"""
+
+@app.route("/send_support")
+def send_support():
+    uid = request.args.get("uid")
+    username = request.args.get("username") or "unknown"
+    msg = request.args.get("msg")
+    conn = db()
+    c = conn.cursor()
+    c.execute("INSERT INTO support VALUES(NULL,?,?,?,?)", (uid, username, "user", msg))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -364,159 +494,6 @@ def all_user_info():
     <div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div>
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
-
-# ====================== বাকি সব রুট (আগের মতোই) ======================
-@app.route("/profile")
-def profile():
-    uid = request.args.get("id")
-    conn = db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=?", (uid,))
-    user = c.fetchone()
-    conn.close()
-    if not user: return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
-
-    html = f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen">
-        <div class="glass p-8 rounded-3xl">
-            <h2 class="text-amber-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
-            <div class="space-y-4 text-lg">
-                <div><strong>Main Balance:</strong> <span class="text-amber-300">{user[2]} USD</span></div>
-                <div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user[3]} USD</span></div>
-                <div><strong>Total Profit:</strong> <span class="text-emerald-400">{user[4]} USD</span></div>
-                <div><strong>Reward Balance:</strong> <span class="text-purple-400">{user[6]} USD</span></div>
-                <div><strong>VIP Level:</strong> <span class="text-yellow-400">VIP {user[5]}</span></div>
-            </div>
-        </div>
-        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a>
-    </div>
-    """
-    return html
-
-@app.route("/clear_messages")
-def clear_messages():
-    uid = request.args.get("id")
-    conn = db()
-    c = conn.cursor()
-    c.execute("DELETE FROM messages WHERE user_id=?", (uid,))
-    conn.commit()
-    conn.close()
-    return "Messages cleared"
-
-@app.route("/manage")
-def manage():
-    uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
-    <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
-
-@app.route("/add")
-def add():
-    uid = request.args.get("uid")
-    amount = float(request.args.get("amount", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET balance = balance + ? WHERE id=?", (amount, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/add_reward")
-def add_reward():
-    uid = request.args.get("uid")
-    amount = float(request.args.get("amount", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET reward_balance = reward_balance + ? WHERE id=?", (amount, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Added to Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/remove")
-def remove():
-    uid = request.args.get("uid")
-    amount = float(request.args.get("amount", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET balance = balance - ? WHERE id=?", (amount, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/profit")
-def profit():
-    uid = request.args.get("uid")
-    percent = float(request.args.get("p", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET total_profit = total_profit + (balance * ? / 100) WHERE id=?", (percent, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {percent}% Profit Added</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/msg")
-def msg():
-    uid = request.args.get("uid")
-    message = request.args.get("m", "")
-    conn = db()
-    c = conn.cursor()
-    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, message))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/support")
-def support():
-    uid = request.args.get("id")
-    username = request.args.get("username") or "unknown"
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="glass p-8 rounded-3xl">
-        <h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2>
-        <form action='/send_support'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input type='hidden' name='username' value='{username}'>
-            <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
-            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send to Admin</button>
-        </form>
-    </div>
-    </div>"""
-
-@app.route("/send_support")
-def send_support():
-    uid = request.args.get("uid")
-    username = request.args.get("username") or "unknown"
-    msg = request.args.get("msg")
-    conn = db()
-    c = conn.cursor()
-    c.execute("INSERT INTO support VALUES(NULL,?,?,?,?)", (uid, username, "user", msg))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
-
-@app.route("/broadcast")
-def broadcast():
-    conn = db()
-    c = conn.cursor()
-    c.execute("SELECT id FROM users")
-    for u in c.fetchall():
-        c.execute("INSERT INTO messages VALUES(NULL,?,?)", (u[0], request.args.get("m")))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Broadcast Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/reply_support")
-def reply_support():
-    uid = request.args.get("uid")
-    reply = request.args.get("reply")
-    conn = db()
-    c = conn.cursor()
-    c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Admin: {reply}"))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Reply Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 # ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
 @app.route("/deposit")
