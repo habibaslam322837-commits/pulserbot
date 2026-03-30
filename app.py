@@ -157,7 +157,7 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[16] == 0:  # registered column (fixed index)
+    if user[16] == 0:  # registered column
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
     # VIP & Reward logic
@@ -304,7 +304,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE (New Remove Reward Balance) ======================
+# ====================== MANAGE (Remove Reward Balance added) ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
@@ -327,7 +327,6 @@ def remove_reward():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-# ====================== ADD / REMOVE / PROFIT / MSG ======================
 @app.route("/add")
 def add():
     uid = request.args.get("uid")
@@ -509,7 +508,7 @@ def all_user_info():
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
-# ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
+# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -546,6 +545,7 @@ def w2():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== PENDING & APPROVE / REJECT ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
