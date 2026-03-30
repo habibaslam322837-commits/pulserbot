@@ -38,9 +38,6 @@ def ui():
     .glow {animation: glow 1.8s ease-in-out infinite alternate;}
     @keyframes glow { from {text-shadow: 0 0 20px #a855f7;} to {text-shadow: 0 0 70px #a855f7, 0 0 110px #a855f7;} }
     .profile-btn {background: linear-gradient(90deg, #22d3ee, #a855f7); color: #0f172a; box-shadow: 0 0 50px #a855f7; font-size: 1.3rem; font-weight: 800;}
-    .marquee {overflow: hidden; white-space: nowrap;}
-    .marquee-content {display: inline-block; animation: marquee 30s linear infinite;}
-    @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
     </style>
     """
 
@@ -53,17 +50,17 @@ def init_db():
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
-                    network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
-                    address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS support (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT,
-                    type TEXT, msg TEXT)''')
+    
+    # Safe migration - add missing columns
+    for col, typ in [
+        ("name", "TEXT"), ("email", "TEXT"), ("phone", "TEXT"),
+        ("country_code", "TEXT"), ("address", "TEXT"),
+        ("referral_code", "TEXT"), ("registered", "INTEGER DEFAULT 0")
+    ]:
+        try:
+            c.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
+        except:
+            pass
     conn.commit()
     conn.close()
 
@@ -83,7 +80,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (120+ দেশ + Search) ======================
+# ====================== REGISTRATION PAGE (ঠিক তোমার স্ক্রিনশটের মতো) ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
@@ -94,80 +91,52 @@ def register():
                 <span class="text-6xl">🚀</span>
                 <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
             </div>
-            <p class="text-center text-blue-200 text-sm mb-6">Join from anywhere in the world!</p>
             <form action="/register_submit" class="space-y-5">
                 <input type="hidden" name="uid" value="{uid}">
+                <input type="hidden" name="country_code" id="selected_country" required>
                 <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                <div class="flex gap-3">
-                    <input list="countries" name="country_search" id="country_search" placeholder="Search Country or Code" class="w-1/3 p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400" oninput="filterCountries()">
-                    <datalist id="countries">
-                        <option value="+880">🇧🇩 Bangladesh +880</option>
-                        <option value="+91">🇮🇳 India +91</option>
-                        <option value="+1">🇺🇸 USA +1</option>
-                        <option value="+44">🇬🇧 UK +44</option>
-                        <option value="+971">🇦🇪 UAE +971</option>
-                        <option value="+966">🇸🇦 Saudi Arabia +966</option>
-                        <option value="+81">🇯🇵 Japan +81</option>
-                        <option value="+82">🇰🇷 South Korea +82</option>
-                        <option value="+86">🇨🇳 China +86</option>
-                        <option value="+33">🇫🇷 France +33</option>
-                        <option value="+49">🇩🇪 Germany +49</option>
-                        <option value="+39">🇮🇹 Italy +39</option>
-                        <option value="+34">🇪🇸 Spain +34</option>
-                        <option value="+7">🇷🇺 Russia +7</option>
-                        <option value="+55">🇧🇷 Brazil +55</option>
-                        <option value="+52">🇲🇽 Mexico +52</option>
-                        <option value="+61">🇦🇺 Australia +61</option>
-                        <option value="+27">🇿🇦 South Africa +27</option>
-                        <option value="+20">🇪🇬 Egypt +20</option>
-                        <option value="+234">🇳🇬 Nigeria +234</option>
-                        <option value="+254">🇰🇪 Kenya +254</option>
-                        <option value="+63">🇵🇭 Philippines +63</option>
-                        <option value="+65">🇸🇬 Singapore +65</option>
-                        <option value="+60">🇲🇾 Malaysia +60</option>
-                        <option value="+66">🇹🇭 Thailand +66</option>
-                        <option value="+84">🇻🇳 Vietnam +84</option>
-                        <option value="+62">🇮🇩 Indonesia +62</option>
-                        <option value="+92">🇵🇰 Pakistan +92</option>
-                        <option value="+94">🇱🇰 Sri Lanka +94</option>
-                        <option value="+977">🇳🇵 Nepal +977</option>
-                        <option value="+975">🇧🇹 Bhutan +975</option>
-                        <option value="+960">🇲🇻 Maldives +960</option>
-                        <option value="+968">🇴🇲 Oman +968</option>
-                        <option value="+974">🇶🇦 Qatar +974</option>
-                        <option value="+965">🇰🇼 Kuwait +965</option>
-                        <option value="+973">🇧🇭 Bahrain +973</option>
-                        <option value="+972">🇮🇱 Israel +972</option>
-                        <option value="+962">🇯🇴 Jordan +962</option>
-                        <option value="+964">🇮🇶 Iraq +964</option>
-                        <option value="+213">🇩🇿 Algeria +213</option>
-                        <option value="+212">🇲🇦 Morocco +212</option>
-                        <option value="+216">🇹🇳 Tunisia +216</option>
-                        <option value="+225">🇨🇮 Ivory Coast +225</option>
-                        <option value="+233">🇬🇭 Ghana +233</option>
-                        <option value="+251">🇪🇹 Ethiopia +251</option>
-                        <option value="+256">🇺🇬 Uganda +256</option>
-                        <option value="+260">🇿🇲 Zambia +260</option>
-                        <option value="+263">🇿🇼 Zimbabwe +263</option>
-                        <option value="+1">🇨🇦 Canada +1</option>
-                        <option value="+54">🇦🇷 Argentina +54</option>
-                        <option value="+56">🇨🇱 Chile +56</option>
-                        <option value="+57">🇨🇴 Colombia +57</option>
-                        <option value="+58">🇻🇪 Venezuela +58</option>
-                        <option value="+51">🇵🇪 Peru +51</option>
-                        <option value="+593">🇪🇨 Ecuador +593</option>
-                        <option value="+598">🇺🇾 Uruguay +598</option>
-                        <option value="+90">🇹🇷 Turkey +90</option>
-                        <option value="+98">🇮🇷 Iran +98</option>
-                        <option value="+20">🇪🇬 Egypt +20</option>
-                        <option value="+27">🇿🇦 South Africa +27</option>
-                        <!-- 120+ দেশ যোগ করা হয়েছে — পৃথিবীর প্রায় সব দেশ কভার -->
-                    </datalist>
-                    <input type="tel" name="phone" placeholder="Phone Number" required class="flex-1 p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                
+                <div class="glass p-5 rounded-3xl">
+                    <h3 class="text-blue-300 text-lg mb-4 text-center">Select country</h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto" id="country_list">
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇧🇩</span>
+                            <span class="flex-1">+880 Bangladesh</span>
+                            <input type="radio" name="country_radio" value="+880" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇮🇳</span>
+                            <span class="flex-1">+91 India</span>
+                            <input type="radio" name="country_radio" value="+91" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇺🇸</span>
+                            <span class="flex-1">+1 USA</span>
+                            <input type="radio" name="country_radio" value="+1" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇬🇧</span>
+                            <span class="flex-1">+44 UK</span>
+                            <input type="radio" name="country_radio" value="+44" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇦🇪</span>
+                            <span class="flex-1">+971 UAE</span>
+                            <input type="radio" name="country_radio" value="+971" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
+                            <span class="text-2xl">🇸🇦</span>
+                            <span class="flex-1">+966 Saudi Arabia</span>
+                            <input type="radio" name="country_radio" value="+966" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
+                        </label>
+                    </div>
                 </div>
+
+                <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
                 <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="agree" name="agree" required class="w-5 h-5 accent-purple-400">
                     <label for="agree" class="text-sm text-blue-200">I agree to the Terms and Conditions</label>
@@ -176,16 +145,6 @@ def register():
             </form>
         </div>
     </div>
-    <script>
-    function filterCountries() {
-        const input = document.getElementById('country_search').value.toUpperCase();
-        const datalist = document.getElementById('countries');
-        const options = datalist.options;
-        for (let option of options) {
-            option.style.display = option.value.toUpperCase().indexOf(input) > -1 ? '' : 'none';
-        }
-    }
-    </script>
     """
 
 @app.route("/register_submit")
@@ -193,7 +152,7 @@ def register_submit():
     uid = request.args.get("uid")
     name = request.args.get("name")
     email = request.args.get("email")
-    country_code = request.args.get("country_search")
+    country_code = request.args.get("country_code")
     phone = request.args.get("phone")
     address = request.args.get("address")
     referral_code = request.args.get("referral_code") or ""
@@ -225,10 +184,9 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[16] == 0:  # registered column
+    if user[16] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # VIP & Reward logic
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -278,7 +236,7 @@ def home():
         <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{user[6]} USD</div></div>
     </div>
     <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
-    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg mb-3'>Deposit</a>
+    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
     <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
@@ -288,9 +246,6 @@ def home():
         <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
     </div>
     {admin_html}
-    <div class="glass p-5 mt-8 text-center overflow-hidden">
-        <div class="marquee"><div class="marquee-content text-sm font-semibold text-white/80">🎁 VIP Rewards Program &nbsp;&nbsp;&nbsp; VIP1 → 500 (50) &nbsp;&nbsp;&nbsp; VIP7 → 50000 (5000)</div></div>
-    </div>
     </div>
 
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
@@ -521,6 +476,7 @@ def admin():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
+    <div class="text-center text-xs bg-green-500 text-white py-1 mb-4 rounded-full">✅ NEW CODE DEPLOYED</div>
     <h2 class="text-blue-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
     <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
     <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
