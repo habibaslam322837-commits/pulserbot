@@ -28,15 +28,15 @@ def ui():
     }
     </script>
     <style>
-    body {background: linear-gradient(135deg, #0f0a1f, #1a0f2e); color: #e0f0ff; font-family: 'Inter', system-ui;}
-    .diamond-glass {background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03)); backdrop-filter: blur(30px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 0 45px rgba(234,179,8,0.7), inset 0 0 25px rgba(255,255,255,0.5); border-radius: 28px;}
-    .neon-gold {text-shadow: 0 0 25px #facc15, 0 0 55px #facc15;}
-    .neon-cyan {text-shadow: 0 0 25px #22d3ee, 0 0 55px #22d3ee;}
-    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1.15rem; box-shadow: 0 0 30px rgba(234,179,8,0.6);}
-    .btn:hover {transform: scale(1.08); box-shadow: 0 0 50px rgba(234,179,8,0.9);}
+    body {background: linear-gradient(135deg, #1a0f2e, #2e0f4d); color: #e0f0ff; font-family: 'Inter', system-ui;}
+    .diamond-glass {background: linear-gradient(145deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05)); backdrop-filter: blur(30px); border: 2px solid rgba(139,92,246,0.4); box-shadow: 0 0 45px rgba(139,92,246,0.6), inset 0 0 25px rgba(255,255,255,0.3); border-radius: 28px;}
+    .neon-purple {text-shadow: 0 0 25px #a855f7, 0 0 55px #a855f7;}
+    .neon-blue {text-shadow: 0 0 25px #22d3ee, 0 0 55px #22d3ee;}
+    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1.15rem; box-shadow: 0 0 30px rgba(139,92,246,0.6);}
+    .btn:hover {transform: scale(1.08); box-shadow: 0 0 50px rgba(139,92,246,0.9);}
     .glow {animation: glow 2s ease-in-out infinite alternate;}
-    @keyframes glow { from {text-shadow: 0 0 15px #facc15;} to {text-shadow: 0 0 50px #facc15;} }
-    .profile-btn {background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; box-shadow: 0 0 40px #22d3ee; font-size: 1.3rem; font-weight: 800;}
+    @keyframes glow { from {text-shadow: 0 0 15px #a855f7;} to {text-shadow: 0 0 50px #a855f7;} }
+    .profile-btn {background: linear-gradient(90deg, #22d3ee, #a855f7); color: #0f172a; box-shadow: 0 0 40px #a855f7; font-size: 1.3rem; font-weight: 800;}
     .marquee {overflow: hidden; white-space: nowrap;}
     .marquee-content {display: inline-block; animation: marquee 30s linear infinite;}
     @keyframes marquee { from {transform: translateX(100%);} to {transform: translateX(-100%);} }
@@ -46,25 +46,20 @@ def ui():
 def init_db():
     conn = db()
     c = conn.cursor()
-    # USERS TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
-    # DEPOSITS TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS deposits (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
                     network TEXT, txid TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    # WITHDRAWS TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount REAL,
                     address TEXT, network TEXT, status TEXT DEFAULT 'pending', reason TEXT)''')
-    # MESSAGES TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS messages (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT)''')
-    # SUPPORT TABLE
     c.execute('''CREATE TABLE IF NOT EXISTS support (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, username TEXT,
                     type TEXT, msg TEXT)''')
@@ -96,7 +91,7 @@ def register():
         <div class="diamond-glass p-8 rounded-3xl w-full">
             <div class="flex justify-center items-center gap-3 mb-6">
                 <span class="text-5xl">🚀</span>
-                <h1 class="text-4xl font-bold neon-gold">PulseForge Smart Savings</h1>
+                <h1 class="text-4xl font-bold neon-purple">PulseForge Smart Savings</h1>
             </div>
             <form action="/register_submit" class="space-y-5">
                 <input type="hidden" name="uid" value="{uid}">
@@ -117,10 +112,10 @@ def register():
                 <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60"></textarea>
                 <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="agree" name="agree" required class="w-5 h-5 accent-cyan-400">
+                    <input type="checkbox" id="agree" name="agree" required class="w-5 h-5 accent-blue-400">
                     <label for="agree" class="text-sm">I agree to the Terms and Conditions</label>
                 </div>
-                <button type="submit" class="btn w-full bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon">Register Now</button>
+                <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue">Register Now</button>
             </form>
         </div>
     </div>"""
@@ -162,8 +157,8 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[10] == 0:  # registered column
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-amber-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-cyan-400 to-purple-500 text-white neon text-xl">Complete Registration</a></div></div>"""
+    if user[16] == 0:  # registered column (fixed index)
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
     # VIP & Reward logic
     current_vip = get_vip_level(user[2])
@@ -194,7 +189,7 @@ def home():
     admin_html = ''
     if uid == ADMIN_ID:
         admin_html = f'''
-        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon">
+        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">
             🔐 Admin Panel
         </a>
         '''
@@ -203,26 +198,26 @@ def home():
     <div class="max-w-md mx-auto p-5 min-h-screen">
     <div class="flex justify-center items-center gap-3 mb-6">
         <span class="text-5xl">🚀</span>
-        <h1 class="text-4xl font-bold neon-gold glow">PulseForge Smart Savings</h1>
+        <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
     </div>
     <div class="glass p-8 text-center mb-8">
         <h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2>
-        <h1 class="text-6xl font-bold neon-gold">{user[2]} USD</h1>
+        <h1 class="text-6xl font-bold neon-purple">{user[2]} USD</h1>
     </div>
     <div class="glass p-6 mb-8">
         <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user[3]} USD</div></div>
         <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user[4]} USD</div></div>
         <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{user[6]} USD</div></div>
     </div>
-    <a href="/profile?id={uid}" class="profile-btn btn neon text-xl mb-4">👤 Profile</a>
-    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg mb-3'>Deposit</a>
-    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon text-lg mb-3'>Withdraw</a>
-    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon text-lg mb-3'>Support</a>
+    <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
+    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg mb-3'>Deposit</a>
+    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
+    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
     <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-amber-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
     </div>
     <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-amber-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-yellow-400">→</span>
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
     </div>
     {admin_html}
     <div class="glass p-5 mt-8 text-center overflow-hidden">
@@ -231,7 +226,7 @@ def home():
     </div>
 
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+      <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
@@ -242,11 +237,11 @@ def home():
     </div>
 
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
+      <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">🎁 VIP Rewards Program</div>
         <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-6 text-white text-sm">
-          <div class="text-center text-amber-300 text-lg font-bold">Upgrade your VIP level to earn more rewards!</div>
+          <div class="text-center text-blue-300 text-lg font-bold">Upgrade your VIP level to earn more rewards!</div>
           <div>🌟 <strong>VIP1</strong> - 500 USDT reward (50 USDT add)</div>
           <div>🌟 <strong>VIP2</strong> - 1000 USDT reward (100 USDT add)</div>
           <div>🌟 <strong>VIP3</strong> - 2000 USDT reward (200 USDT add)</div>
@@ -285,13 +280,13 @@ def profile():
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
         <div class="glass p-8 rounded-3xl">
-            <h2 class="text-amber-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
+            <h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
             <div class="space-y-4 text-lg">
-                <div><strong>Main Balance:</strong> <span class="text-amber-300">{user[2]} USD</span></div>
+                <div><strong>Main Balance:</strong> <span class="text-blue-300">{user[2]} USD</span></div>
                 <div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user[3]} USD</span></div>
                 <div><strong>Total Profit:</strong> <span class="text-emerald-400">{user[4]} USD</span></div>
                 <div><strong>Reward Balance:</strong> <span class="text-purple-400">{user[6]} USD</span></div>
-                <div><strong>VIP Level:</strong> <span class="text-yellow-400">VIP {user[5]}</span></div>
+                <div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user[5]}</span></div>
             </div>
         </div>
         <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a>
@@ -309,17 +304,30 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE ======================
+# ====================== MANAGE (New Remove Reward Balance) ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-6">Manage User {uid}</h2>
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-xl mb-6">Manage User {uid}</h2>
     <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/remove_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Reward Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-yellow-500 text-black w-full'>Send Message</button></form></div></div>"""
+    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
 
+@app.route("/remove_reward")
+def remove_reward():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET reward_balance = reward_balance - ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+# ====================== ADD / REMOVE / PROFIT / MSG ======================
 @app.route("/add")
 def add():
     uid = request.args.get("uid")
@@ -387,7 +395,7 @@ def support():
             <input type='hidden' name='uid' value='{uid}'>
             <input type='hidden' name='username' value='{username}'>
             <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
-            <button class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white'>Send to Admin</button>
+            <button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white'>Send to Admin</button>
         </form>
     </div>
     </div>"""
@@ -430,7 +438,7 @@ def admin():
     user_list_html = "".join([f"""
     <div class="glass p-4 rounded-2xl flex justify-between items-center">
         <div><span class="font-medium text-white">@{u[1] or u[2] or u[0]}</span><br><span class="text-emerald-400 text-sm">{u[3]} USD</span></div>
-        <a href='/manage?uid={u[0]}' class="text-amber-400 font-medium">Manage</a>
+        <a href='/manage?uid={u[0]}' class="text-blue-400 font-medium">Manage</a>
     </div>""" for u in users])
 
     support_html = "".join([f"""
@@ -446,23 +454,23 @@ def admin():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
-    <h2 class="text-amber-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
-    <a href='/all_user_info' class='btn bg-gradient-to-r from-cyan-400 to-blue-500 text-white neon text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
-    <a href='/deposits' class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
-    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
+    <h2 class="text-blue-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
+    <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
+    <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
+    <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
     <div class="glass mt-6 p-6">
-        <h3 class="text-amber-400 mb-3">Broadcast to All Users</h3>
+        <h3 class="text-blue-400 mb-3">Broadcast to All Users</h3>
         <form action='/broadcast'>
             <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
             <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
         </form>
     </div>
     <div class="glass mt-4 p-6">
-        <h3 class="text-amber-400 mb-3">All Users</h3>
+        <h3 class="text-blue-400 mb-3">All Users</h3>
         <div class="space-y-3">{user_list_html}</div>
     </div>
     <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-amber-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
+        <h3 class="text-blue-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
     </div>
     </div>
     <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
@@ -496,16 +504,16 @@ def all_user_info():
         <p><strong>Balance:</strong> {u[7]} USD</p>
     </div>""" for u in users])
     return f"""{ui()}<div class="max-w-md mx-auto p-4">
-    <h2 class="text-amber-400 text-center text-3xl mb-6">👥 All User Information</h2>
+    <h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2>
     <div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div>
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
-# ====================== DEPOSIT ======================
+# ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Next</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Next</button></form></div></div>"""
 
 @app.route("/dep2")
 def dep2():
@@ -513,7 +521,7 @@ def dep2():
     net = request.args.get("network")
     amount = request.args.get("amount")
     addr = TRC if net == "TRC20" else ERC
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button class='btn bg-gradient-to-r from-amber-400 to-yellow-500 text-black neon'>Submit</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Submit</button></form></div></div>"""
 
 @app.route("/dep3")
 def dep3():
@@ -524,7 +532,6 @@ def dep3():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -539,7 +546,6 @@ def w2():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# ====================== PENDING DEPOSITS / WITHDRAWS ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
@@ -548,7 +554,7 @@ def deposits():
     data = c.fetchall()
     conn.close()
     items = "".join([f"""<div class="glass p-5"><p><strong>User:</strong> {d[1]}</p><p><strong>Amount:</strong> {d[2]} USD</p><p><strong>Network:</strong> {d[3]}</p><p><strong>TXID:</strong> {d[4]}</p><div class="flex gap-3 mt-5"><a href='/approve_dep?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_dep' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reason" class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Reject</button></form></div></div>""" for d in data])
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Deposits</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending deposits</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-xl mb-4">Pending Deposits</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending deposits</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
 
 @app.route("/withdraws")
 def withdraws():
@@ -558,7 +564,7 @@ def withdraws():
     data = c.fetchall()
     conn.close()
     items = "".join([f"""<div class="glass p-5"><p><strong>User:</strong> {d[1]}</p><p><strong>Amount:</strong> {d[2]} USD</p><p><strong>Address:</strong> {d[3]}</p><p><strong>Network:</strong> {d[4]}</p><div class="flex gap-3 mt-5"><a href='/approve_w?id={d[0]}' class='btn bg-green-500 flex-1'>Approve</a><form action='/reject_w' class="flex-1"><input type='hidden' name='id' value='{d[0]}'><input name='reason' placeholder="Reason" class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Reject</button></form></div></div>""" for d in data])
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-amber-400 text-center text-xl mb-4">Pending Withdraws</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending withdraws</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-xl mb-4">Pending Withdraws</h2>{items or '<div class="glass p-8 text-center text-gray-400">No pending withdraws</div>'}<a href='/admin?id={ADMIN_ID}' class="btn bg-gray-500 text-white mt-6">← Back to Admin</a></div>"""
 
 @app.route("/approve_dep")
 def approve_dep():
