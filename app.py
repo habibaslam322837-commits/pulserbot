@@ -82,7 +82,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE ======================
+# ====================== REGISTRATION PAGE (Country Code খালি + placeholder) ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
