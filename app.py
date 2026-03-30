@@ -51,7 +51,7 @@ def init_db():
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
     
-    # Safe migration - add missing columns
+    # Safe migration
     for col, typ in [
         ("name", "TEXT"), ("email", "TEXT"), ("phone", "TEXT"),
         ("country_code", "TEXT"), ("address", "TEXT"),
@@ -80,7 +80,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (ঠিক তোমার স্ক্রিনশটের মতো) ======================
+# ====================== REGISTRATION PAGE (Manual Country Code) ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
@@ -93,44 +93,12 @@ def register():
             </div>
             <form action="/register_submit" class="space-y-5">
                 <input type="hidden" name="uid" value="{uid}">
-                <input type="hidden" name="country_code" id="selected_country" required>
                 <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 
                 <div class="glass p-5 rounded-3xl">
-                    <h3 class="text-blue-300 text-lg mb-4 text-center">Select country</h3>
-                    <div class="space-y-2 max-h-80 overflow-y-auto" id="country_list">
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇧🇩</span>
-                            <span class="flex-1">+880 Bangladesh</span>
-                            <input type="radio" name="country_radio" value="+880" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇮🇳</span>
-                            <span class="flex-1">+91 India</span>
-                            <input type="radio" name="country_radio" value="+91" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇺🇸</span>
-                            <span class="flex-1">+1 USA</span>
-                            <input type="radio" name="country_radio" value="+1" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇬🇧</span>
-                            <span class="flex-1">+44 UK</span>
-                            <input type="radio" name="country_radio" value="+44" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇦🇪</span>
-                            <span class="flex-1">+971 UAE</span>
-                            <input type="radio" name="country_radio" value="+971" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                        <label class="flex items-center gap-4 p-4 hover:bg-white/10 rounded-2xl cursor-pointer">
-                            <span class="text-2xl">🇸🇦</span>
-                            <span class="flex-1">+966 Saudi Arabia</span>
-                            <input type="radio" name="country_radio" value="+966" class="accent-purple-400" onchange="document.getElementById('selected_country').value = this.value">
-                        </label>
-                    </div>
+                    <h3 class="text-blue-300 text-lg mb-4 text-center">Country Code</h3>
+                    <input type="text" name="country_code" placeholder="+880" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 </div>
 
                 <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
@@ -164,7 +132,7 @@ def register_submit():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
 
-# ====================== HOME ======================
+# ====================== HOME (Admin direct entry) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -184,9 +152,11 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[16] == 0:
+    # Admin-কে registration ছাড়াই ঢুকতে দাও
+    if uid != ADMIN_ID and user[16] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
+    # VIP & Reward logic
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -289,7 +259,9 @@ def home():
     """
     return html
 
-# ====================== PROFILE ======================
+# ====================== বাকি সব রুট (পুরোপুরি কাজ করবে) ======================
+# Profile, Manage, Deposit, Withdraw, Admin, All User Info, Approve/Reject, Broadcast, Support সব আছে
+
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -327,7 +299,6 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
@@ -405,7 +376,6 @@ def msg():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Message Sent</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-# ====================== SUPPORT ======================
 @app.route("/support")
 def support():
     uid = request.args.get("id")
@@ -434,7 +404,6 @@ def send_support():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -476,7 +445,7 @@ def admin():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
-    <div class="text-center text-xs bg-green-500 text-white py-1 mb-4 rounded-full">✅ NEW CODE DEPLOYED</div>
+    <div class="text-center py-4 bg-red-600 text-white text-xl font-bold mb-6 rounded-3xl">🚀 NEW FULL CODE - 30 MARCH 2026</div>
     <h2 class="text-blue-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
     <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
     <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
@@ -532,7 +501,6 @@ def all_user_info():
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
-# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
