@@ -8,8 +8,8 @@ app = Flask(__name__)
 def db():
     return sqlite3.connect("users.db")
 
-TRC = "TSd1kwMavFDHJNXXqioSXWjywrEJW5Dt3U"
-ERC = "0x3ae6c6ca3a0cdd54d93f605284a423b572caca72"
+TRC = "TNWvYkycZFUfWzADKUQRjiZmRJWRhbU7Hm"
+ERC = "0xFc9B81aa8e1921A2A4cd2ca7B46489c446F6c059"
 
 ADMIN_ID = "8671125457"
 BOT_USERNAME = "pulseofficialsbot"
