@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 def db():
     conn = sqlite3.connect("users.db")
-    conn.row_factory = sqlite3.Row   # এটা দিয়ে named column ব্যবহার করা যায়, index error যাবে
+    conn.row_factory = sqlite3.Row
     return conn
 
 TRC = "TNWvYkycZFUfWzADKUQRjiZmRJWRhbU7Hm"
@@ -46,6 +46,8 @@ def ui():
 def init_db():
     conn = db()
     c = conn.cursor()
+    
+    # USERS
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
@@ -53,12 +55,26 @@ def init_db():
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
     
-    # Safe migration for old database
-    for col, typ in [
-        ("name", "TEXT"), ("email", "TEXT"), ("phone", "TEXT"),
-        ("country_code", "TEXT"), ("address", "TEXT"),
-        ("referral_code", "TEXT"), ("registered", "INTEGER DEFAULT 0")
-    ]:
+    # MESSAGES
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY, user_id TEXT, message TEXT)''')
+    
+    # SUPPORT
+    c.execute('''CREATE TABLE IF NOT EXISTS support (
+                    id INTEGER PRIMARY KEY, user_id TEXT, username TEXT, sender TEXT, msg TEXT)''')
+    
+    # DEPOSITS
+    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
+                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, network TEXT, 
+                    txid TEXT, status TEXT, reason TEXT)''')
+    
+    # WITHDRAWS
+    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
+                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, 
+                    network TEXT, status TEXT, reason TEXT)''')
+    
+    # Safe migration
+    for col, typ in [("name","TEXT"), ("email","TEXT"), ("phone","TEXT"), ("country_code","TEXT"), ("address","TEXT"), ("referral_code","TEXT"), ("registered","INTEGER DEFAULT 0")]:
         try:
             c.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
         except:
@@ -79,10 +95,10 @@ def get_vip_level(balance):
     return 0
 
 def get_vip_bonus(level):
-    bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
+    bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (Country Code খালি + placeholder) ======================
+# ====================== REGISTRATION ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
@@ -97,18 +113,15 @@ def register():
                 <input type="hidden" name="uid" value="{uid}">
                 <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                
                 <div class="glass p-5 rounded-3xl">
                     <h3 class="text-blue-300 text-lg mb-4 text-center">Country Code</h3>
                     <input type="text" name="country_code" placeholder="Country Code (e.g. +1)" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 </div>
-
                 <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
                 <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="agree" name="agree" required class="w-5 h-5 accent-purple-400">
+                    <input type="checkbox" id="agree" required class="w-5 h-5 accent-purple-400">
                     <label for="agree" class="text-sm text-blue-200">I agree to the Terms and Conditions</label>
                 </div>
                 <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
@@ -128,8 +141,7 @@ def register_submit():
     referral_code = request.args.get("referral_code") or ""
     conn = db()
     c = conn.cursor()
-    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 WHERE id=?""", 
-              (name, email, country_code, phone, address, referral_code, uid))
+    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 WHERE id=?""", (name, email, country_code, phone, address, referral_code, uid))
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
@@ -138,11 +150,11 @@ def register_submit():
 @app.route("/")
 def home():
     uid = request.args.get("id")
-    username = request.args.get("username") or None
-    first_name = request.args.get("first_name") or None
+    username = request.args.get("username") or ""
+    first_name = request.args.get("first_name") or ""
 
     if not uid:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-2xl mb-4">⚠️ Access Denied</h2><p class="text-xl mb-6">Please start the bot first.</p><a href="https://t.me/{BOT_USERNAME}" target="_blank" class="btn bg-green-500 text-white text-lg">🚀 Start Bot Now</a></div></div>"""
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-red-400 text-2xl mb-4">⚠️ Access Denied</h2><a href="https://t.me/{BOT_USERNAME}" target="_blank" class="btn bg-green-500 text-white text-lg">🚀 Start Bot Now</a></div></div>"""
 
     conn = db()
     c = conn.cursor()
@@ -154,14 +166,14 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # Admin-কে সরাসরি Admin Panel-এ পাঠাও
+    # ADMIN সরাসরি
     if uid == ADMIN_ID:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple text-2xl">Go to Admin Panel</a></div></div>"""
 
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # VIP & Reward logic
+    # VIP + Reward
     current_vip = get_vip_level(user['balance'])
     if current_vip > user['vip_level']:
         bonus = get_vip_bonus(current_vip)
@@ -186,25 +198,12 @@ def home():
     conn.close()
 
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
-
-    admin_html = ''
-    if uid == ADMIN_ID:
-        admin_html = f'''
-        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">
-            🔐 Admin Panel
-        </a>
-        '''
+    admin_html = f'<a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">🔐 Admin Panel</a>' if uid == ADMIN_ID else ''
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="flex justify-center items-center gap-3 mb-6">
-        <span class="text-5xl">🚀</span>
-        <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
-    </div>
-    <div class="glass p-8 text-center mb-8">
-        <h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2>
-        <h1 class="text-6xl font-bold neon-purple">{user['balance']} USD</h1>
-    </div>
+    <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
+    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{user['balance']} USD</h1></div>
     <div class="glass p-6 mb-8">
         <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user['profit']} USD</div></div>
         <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
@@ -214,12 +213,8 @@ def home():
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
-    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
-    </div>
-    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
-    </div>
+    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
+    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span></div>
     {admin_html}
     </div>
 
@@ -228,9 +223,7 @@ def home():
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
-        <div class="p-4 border-t border-gray-700">
-            <button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
-        </div>
+        <div class="p-4 border-t border-gray-700"><button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button></div>
       </div>
     </div>
 
@@ -264,7 +257,6 @@ def home():
     """
     return html
 
-# ====================== PROFILE ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -273,23 +265,7 @@ def profile():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
     conn.close()
-    if not user: return f"""{ui()}<div class="max-w-md mx-auto p-5 text-center">User not found</div>"""
-
-    html = f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen">
-        <div class="glass p-8 rounded-3xl">
-            <h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2>
-            <div class="space-y-4 text-lg">
-                <div><strong>Main Balance:</strong> <span class="text-blue-300">{user['balance']} USD</span></div>
-                <div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user['profit']} USD</span></div>
-                <div><strong>Total Profit:</strong> <span class="text-emerald-400">{user['total_profit']} USD</span></div>
-                <div><strong>Reward Balance:</strong> <span class="text-purple-400">{user['reward_balance']} USD</span></div>
-                <div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user['vip_level']}</span></div>
-            </div>
-        </div>
-        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a>
-    </div>
-    """
+    html = f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2><div class="space-y-4 text-lg"><div><strong>Main Balance:</strong> <span class="text-blue-300">{user['balance']} USD</span></div><div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user['profit']} USD</span></div><div><strong>Total Profit:</strong> <span class="text-emerald-400">{user['total_profit']} USD</span></div><div><strong>Reward Balance:</strong> <span class="text-purple-400">{user['reward_balance']} USD</span></div><div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user['vip_level']}</span></div></div></div><a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a></div>"""
     return html
 
 @app.route("/clear_messages")
@@ -384,17 +360,7 @@ def msg():
 def support():
     uid = request.args.get("id")
     username = request.args.get("username") or "unknown"
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="glass p-8 rounded-3xl">
-        <h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2>
-        <form action='/send_support'>
-            <input type='hidden' name='uid' value='{uid}'>
-            <input type='hidden' name='username' value='{username}'>
-            <textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea>
-            <button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white'>Send to Admin</button>
-        </form>
-    </div>
-    </div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2><form action='/send_support'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='username' value='{username}'><textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white'>Send to Admin</button></form></div></div>"""
 
 @app.route("/send_support")
 def send_support():
@@ -431,22 +397,9 @@ def admin():
     badge_dep = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_dep}</span>' if pending_dep > 0 else ''
     badge_wd = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_wd}</span>' if pending_wd > 0 else ''
 
-    user_list_html = "".join([f"""
-    <div class="glass p-4 rounded-2xl flex justify-between items-center">
-        <div><span class="font-medium text-white">@{u['username'] or u['first_name'] or u['id']}</span><br><span class="text-emerald-400 text-sm">{u['balance']} USD</span></div>
-        <a href='/manage?uid={u['id']}' class="text-blue-400 font-medium">Manage</a>
-    </div>""" for u in users])
+    user_list_html = "".join([f"""<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><span class="font-medium text-white">@{u['username'] or u['first_name'] or u['id']}</span><br><span class="text-emerald-400 text-sm">{u['balance']} USD</span></div><a href='/manage?uid={u['id']}' class="text-blue-400 font-medium">Manage</a></div>""" for u in users])
 
-    support_html = "".join([f"""
-    <div class="glass p-5">
-        <p><strong>From:</strong> @{s['username']} (ID: {s['user_id']})</p>
-        <p class="mt-2">{s['msg']}</p>
-        <form action='/reply_support' class="mt-4">
-            <input type='hidden' name='uid' value='{s['user_id']}'>
-            <input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'>
-            <button class='btn bg-blue-500 w-full'>Send Reply</button>
-        </form>
-    </div>""" for s in sup])
+    support_html = "".join([f"""<div class="glass p-5"><p><strong>From:</strong> @{s['username']} (ID: {s['user_id']})</p><p class="mt-2">{s['msg']}</p><form action='/reply_support' class="mt-4"><input type='hidden' name='uid' value='{s['user_id']}'><input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Send Reply</button></form></div>""" for s in sup])
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
@@ -455,20 +408,9 @@ def admin():
     <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
     <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
     <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
-    <div class="glass mt-6 p-6">
-        <h3 class="text-blue-400 mb-3">Broadcast to All Users</h3>
-        <form action='/broadcast'>
-            <textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea>
-            <button class='btn bg-blue-500 w-full'>Send Broadcast</button>
-        </form>
-    </div>
-    <div class="glass mt-4 p-6">
-        <h3 class="text-blue-400 mb-3">All Users</h3>
-        <div class="space-y-3">{user_list_html}</div>
-    </div>
-    <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10">
-        <h3 class="text-blue-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}
-    </div>
+    <div class="glass mt-6 p-6"><h3 class="text-blue-400 mb-3">Broadcast to All Users</h3><form action='/broadcast'><textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 w-full'>Send Broadcast</button></form></div>
+    <div class="glass mt-4 p-6"><h3 class="text-blue-400 mb-3">All Users</h3><div class="space-y-3">{user_list_html}</div></div>
+    <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}</div>
     </div>
     <div id="supportModal" onclick="if(event.target===this)closeSupportModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
@@ -491,20 +433,8 @@ def all_user_info():
     c.execute("SELECT id, name, email, phone, country_code, address, referral_code, balance FROM users WHERE registered=1")
     users = c.fetchall()
     conn.close()
-    user_html = "".join([f"""
-    <div class="glass p-5 mb-4">
-        <p><strong>ID:</strong> {u['id']}</p>
-        <p><strong>Name:</strong> {u['name'] or 'N/A'}</p>
-        <p><strong>Email:</strong> {u['email'] or 'N/A'}</p>
-        <p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p>
-        <p><strong>Address:</strong> {u['address'] or 'N/A'}</p>
-        <p><strong>Balance:</strong> {u['balance']} USD</p>
-    </div>""" for u in users])
-    return f"""{ui()}<div class="max-w-md mx-auto p-4">
-    <h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2>
-    <div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div>
-    <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
-    </div>"""
+    user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']} USD</p></div>""" for u in users])
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2><div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div><a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a></div>"""
 
 # ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
@@ -524,7 +454,7 @@ def dep2():
 def dep3():
     conn = db()
     c = conn.cursor()
-    c.execute("INSERT INTO deposits VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("network"), request.args.get("txid"), "pending", ""))
+    c.execute("INSERT INTO deposits VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), float(request.args.get("amount")), request.args.get("network"), request.args.get("txid"), "pending", ""))
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
@@ -538,7 +468,7 @@ def withdraw():
 def w2():
     conn = db()
     c = conn.cursor()
-    c.execute("INSERT INTO withdraws VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), request.args.get("amount"), request.args.get("address"), request.args.get("network"), "pending", ""))
+    c.execute("INSERT INTO withdraws VALUES(NULL,?,?,?,?,?,?)", (request.args.get("uid"), float(request.args.get("amount")), request.args.get("address"), request.args.get("network"), "pending", ""))
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
