@@ -22,6 +22,7 @@ def ui():
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
+    tg.setHeaderColor('#1a0f2e');
     const user = tg.initDataUnsafe?.user;
     if (window.location.pathname === '/' && user && !window.location.search.includes("id=")) {
         window.location.href = '/?id=' + user.id + '&username=' + (user.username || '') + '&first_name=' + encodeURIComponent(user.first_name || '');
@@ -82,7 +83,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (120+ দেশ + Strong Neon) ======================
+# ====================== REGISTRATION PAGE (120+ দেশ + Search) ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
@@ -99,8 +100,8 @@ def register():
                 <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 <div class="flex gap-3">
-                    <select name="country_code" class="w-1/3 p-4 rounded-2xl bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-400" required>
-                        <option value="" disabled selected>Select Country</option>
+                    <input list="countries" name="country_search" id="country_search" placeholder="Search Country or Code" class="w-1/3 p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400" oninput="filterCountries()">
+                    <datalist id="countries">
                         <option value="+880">🇧🇩 Bangladesh +880</option>
                         <option value="+91">🇮🇳 India +91</option>
                         <option value="+1">🇺🇸 USA +1</option>
@@ -161,8 +162,8 @@ def register():
                         <option value="+98">🇮🇷 Iran +98</option>
                         <option value="+20">🇪🇬 Egypt +20</option>
                         <option value="+27">🇿🇦 South Africa +27</option>
-                        <!-- আরও অনেক দেশ যোগ করা হয়েছে — পৃথিবীর প্রায় সব দেশ কভার করা আছে -->
-                    </select>
+                        <!-- 120+ দেশ যোগ করা হয়েছে — পৃথিবীর প্রায় সব দেশ কভার -->
+                    </datalist>
                     <input type="tel" name="phone" placeholder="Phone Number" required class="flex-1 p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 </div>
                 <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
@@ -174,14 +175,25 @@ def register():
                 <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
             </form>
         </div>
-    </div>"""
+    </div>
+    <script>
+    function filterCountries() {
+        const input = document.getElementById('country_search').value.toUpperCase();
+        const datalist = document.getElementById('countries');
+        const options = datalist.options;
+        for (let option of options) {
+            option.style.display = option.value.toUpperCase().indexOf(input) > -1 ? '' : 'none';
+        }
+    }
+    </script>
+    """
 
 @app.route("/register_submit")
 def register_submit():
     uid = request.args.get("uid")
     name = request.args.get("name")
     email = request.args.get("email")
-    country_code = request.args.get("country_code")
+    country_code = request.args.get("country_search")
     phone = request.args.get("phone")
     address = request.args.get("address")
     referral_code = request.args.get("referral_code") or ""
@@ -213,7 +225,7 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    if user[16] == 0:  # registered
+    if user[16] == 0:  # registered column
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
     # VIP & Reward logic
@@ -360,7 +372,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE (Remove Reward Balance) ======================
+# ====================== MANAGE ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
@@ -383,7 +395,6 @@ def remove_reward():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-# ====================== ADD / REMOVE / PROFIT / MSG ======================
 @app.route("/add")
 def add():
     uid = request.args.get("uid")
@@ -468,7 +479,7 @@ def send_support():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Support Sent</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# ====================== ADMIN PANEL (Strong Purple-Blue Neon) ======================
+# ====================== ADMIN PANEL ======================
 @app.route("/admin")
 def admin():
     uid = request.args.get("id")
@@ -565,7 +576,7 @@ def all_user_info():
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
-# ====================== DEPOSIT / WITHDRAW / APPROVE / REJECT ======================
+# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
