@@ -80,7 +80,7 @@ def get_vip_bonus(level):
     bonuses = {1: 50, 2: 100, 3: 200, 4: 500, 5: 1000, 6: 2000, 7: 5000}
     return bonuses.get(level, 0)
 
-# ====================== REGISTRATION PAGE (Country Code খালি) ======================
+# ====================== REGISTRATION PAGE (Country Code খালি + placeholder) ======================
 @app.route("/register")
 def register():
     uid = request.args.get("id")
@@ -98,7 +98,7 @@ def register():
                 
                 <div class="glass p-5 rounded-3xl">
                     <h3 class="text-blue-300 text-lg mb-4 text-center">Country Code</h3>
-                    <input type="text" name="country_code" placeholder="Country Code (e.g. +880)" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    <input type="text" name="country_code" placeholder="Country Code (e.g. +1)" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
                 </div>
 
                 <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
@@ -132,7 +132,7 @@ def register_submit():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
 
-# ====================== HOME (Admin direct + Safe) ======================
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -152,14 +152,14 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # Admin-কে registration ছাড়াই ঢুকতে দাও
+    # Admin-কে সরাসরি Admin Panel-এ পাঠাও
     if uid == ADMIN_ID:
-        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple">Go to Admin Panel</a></div></div>"""
+        return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple text-2xl">Go to Admin Panel</a></div></div>"""
 
     if user[16] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # VIP & Reward logic (safe)
+    # VIP & Reward logic
     current_vip = get_vip_level(user[2])
     if current_vip > user[5]:
         bonus = get_vip_bonus(current_vip)
@@ -185,11 +185,13 @@ def home():
 
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
 
-    admin_html = f'''
-    <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">
-        🔐 Admin Panel
-    </a>
-    ''' if uid == ADMIN_ID else ''
+    admin_html = ''
+    if uid == ADMIN_ID:
+        admin_html = f'''
+        <a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">
+            🔐 Admin Panel
+        </a>
+        '''
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
@@ -502,6 +504,7 @@ def all_user_info():
     <a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a>
     </div>"""
 
+# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
