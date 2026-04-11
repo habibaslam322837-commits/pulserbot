@@ -5,16 +5,94 @@ import os
 
 app = Flask(__name__)
 
+# ====================== ২০টা জনপ্রিয় ভাষা (বাংলা + আরবি বাদ) ======================
+LANGUAGES = {
+    "en": "🇬🇧 English",
+    "es": "🇪🇸 Español",
+    "fr": "🇫🇷 Français",
+    "de": "🇩🇪 Deutsch",
+    "it": "🇮🇹 Italiano",
+    "pt": "🇵🇹 Português",
+    "pl": "🇵🇱 Polski",
+    "ru": "🇷🇺 Русский",
+    "nl": "🇳🇱 Nederlands",
+    "sv": "🇸🇪 Svenska",
+    "no": "🇳🇴 Norsk",
+    "da": "🇩🇰 Dansk",
+    "fi": "🇫🇮 Suomi",
+    "el": "🇬🇷 Ελληνικά",
+    "tr": "🇹🇷 Türkçe",
+    "ro": "🇷🇴 Română",
+    "hu": "🇭🇺 Magyar",
+    "cs": "🇨🇿 Čeština",
+    "hr": "🇭🇷 Hrvatski",
+    "bg": "🇧🇬 Български"
+}
+
+# ====================== টেক্সট অনুবাদ (User Panel এর জন্য) ======================
+TEXT = {
+    "en": {"title": "PulseForge Smart Savings", "balance": "Balance", "daily_profit": "Daily Profit", "total_profit": "Total Profit", "reward": "Reward Balance", "deposit": "Deposit", "withdraw": "Withdraw", "support": "Support", "profile": "Profile", "vip": "VIP System", "messages": "Messages"},
+    "es": {"title": "PulseForge Ahorros Inteligentes", "balance": "Saldo", "daily_profit": "Ganancia Diaria", "total_profit": "Ganancia Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Retirar", "support": "Soporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensajes"},
+    "fr": {"title": "PulseForge Épargne Intelligente", "balance": "Solde", "daily_profit": "Profit Journalier", "total_profit": "Profit Total", "reward": "Solde de Récompense", "deposit": "Déposer", "withdraw": "Retirer", "support": "Support", "profile": "Profil", "vip": "Système VIP", "messages": "Messages"},
+    "de": {"title": "PulseForge Intelligentes Sparen", "balance": "Saldo", "daily_profit": "Täglicher Gewinn", "total_profit": "Gesamtgewinn", "reward": "Belohnungssaldo", "deposit": "Einzahlen", "withdraw": "Abheben", "support": "Support", "profile": "Profil", "vip": "VIP-System", "messages": "Nachrichten"},
+    "it": {"title": "PulseForge Risparmio Intelligente", "balance": "Saldo", "daily_profit": "Profitto Giornaliero", "total_profit": "Profitto Totale", "reward": "Saldo Ricompense", "deposit": "Deposita", "withdraw": "Preleva", "support": "Supporto", "profile": "Profilo", "vip": "Sistema VIP", "messages": "Messaggi"},
+    "pt": {"title": "PulseForge Poupança Inteligente", "balance": "Saldo", "daily_profit": "Lucro Diário", "total_profit": "Lucro Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Sacar", "support": "Suporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensagens"},
+    "pl": {"title": "PulseForge Oszczędności Inteligentne", "balance": "Saldo", "daily_profit": "Zysk Dzienny", "total_profit": "Zysk Całkowity", "reward": "Saldo Nagród", "deposit": "Wpłata", "withdraw": "Wypłata", "support": "Wsparcie", "profile": "Profil", "vip": "System VIP", "messages": "Wiadomości"},
+    "ru": {"title": "PulseForge Умные Сбережения", "balance": "Баланс", "daily_profit": "Ежедневная прибыль", "total_profit": "Общая прибыль", "reward": "Баланс вознаграждений", "deposit": "Депозит", "withdraw": "Вывод", "support": "Поддержка", "profile": "Профиль", "vip": "VIP Система", "messages": "Сообщения"},
+    "nl": {"title": "PulseForge Slimme Spaarrekening", "balance": "Saldo", "daily_profit": "Dagelijkse Winst", "total_profit": "Totale Winst", "reward": "Beloningsaldo", "deposit": "Storten", "withdraw": "Opnemen", "support": "Support", "profile": "Profiel", "vip": "VIP Systeem", "messages": "Berichten"},
+    "sv": {"title": "PulseForge Smarta Sparande", "balance": "Saldo", "daily_profit": "Daglig Vinst", "total_profit": "Total Vinst", "reward": "Belöningsbalans", "deposit": "Insättning", "withdraw": "Uttag", "support": "Support", "profile": "Profil", "vip": "VIP System", "messages": "Meddelanden"}
+}
+
+def get_text(lang, key):
+    return TEXT.get(lang, TEXT["en"]).get(key, key)
+
+# ====================== DATABASE ======================
 def db():
     conn = sqlite3.connect("users.db")
     conn.row_factory = sqlite3.Row
     return conn
 
-TRC = "TNWvYkycZFUfWzADKUQRjiZmRJWRhbU7Hm"
-ERC = "0xFc9B81aa8e1921A2A4cd2ca7B46489c446F6c059"
+def init_db():
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
+                    profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
+                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
+                    username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
+                    country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0,
+                    language TEXT DEFAULT "en")''')
+    
+    # Safe migration for language column
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en'")
+    except:
+        pass
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, user_id TEXT, message TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS support (id INTEGER PRIMARY KEY, user_id TEXT, username TEXT, sender TEXT, msg TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS deposits (id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, network TEXT, txid TEXT, status TEXT, reason TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, network TEXT, status TEXT, reason TEXT)''')
+    
+    conn.commit()
+    conn.close()
 
-ADMIN_ID = "8671125457"
-BOT_USERNAME = "pulseofficialsbot"
+init_db()
+
+def get_vip_level(balance):
+    if balance >= 50000: return 7
+    if balance >= 20000: return 6
+    if balance >= 10000: return 5
+    if balance >= 5000: return 4
+    if balance >= 2000: return 3
+    if balance >= 1000: return 2
+    if balance >= 500: return 1
+    return 0
+
+def get_vip_bonus(level):
+    bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
+    return bonuses.get(level, 0)
 
 def ui():
     return """
@@ -43,110 +121,7 @@ def ui():
     </style>
     """
 
-def init_db():
-    conn = db()
-    c = conn.cursor()
-    
-    # USERS
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-                    id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
-                    profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
-                    reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
-                    username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
-                    country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
-    
-    # MESSAGES
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY, user_id TEXT, message TEXT)''')
-    
-    # SUPPORT
-    c.execute('''CREATE TABLE IF NOT EXISTS support (
-                    id INTEGER PRIMARY KEY, user_id TEXT, username TEXT, sender TEXT, msg TEXT)''')
-    
-    # DEPOSITS
-    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
-                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, network TEXT, 
-                    txid TEXT, status TEXT, reason TEXT)''')
-    
-    # WITHDRAWS
-    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
-                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, 
-                    network TEXT, status TEXT, reason TEXT)''')
-    
-    # Safe migration
-    for col, typ in [("name","TEXT"), ("email","TEXT"), ("phone","TEXT"), ("country_code","TEXT"), ("address","TEXT"), ("referral_code","TEXT"), ("registered","INTEGER DEFAULT 0")]:
-        try:
-            c.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
-        except:
-            pass
-    conn.commit()
-    conn.close()
-
-init_db()
-
-def get_vip_level(balance):
-    if balance >= 50000: return 7
-    if balance >= 20000: return 6
-    if balance >= 10000: return 5
-    if balance >= 5000: return 4
-    if balance >= 2000: return 3
-    if balance >= 1000: return 2
-    if balance >= 500: return 1
-    return 0
-
-def get_vip_bonus(level):
-    bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
-    return bonuses.get(level, 0)
-
-# ====================== REGISTRATION ======================
-@app.route("/register")
-def register():
-    uid = request.args.get("id")
-    return f"""{ui()}
-    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center">
-        <div class="diamond-glass p-8 rounded-3xl w-full">
-            <div class="flex justify-center items-center gap-3 mb-6">
-                <span class="text-6xl">🚀</span>
-                <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
-            </div>
-            <form action="/register_submit" class="space-y-5">
-                <input type="hidden" name="uid" value="{uid}">
-                <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                <div class="glass p-5 rounded-3xl">
-                    <h3 class="text-blue-300 text-lg mb-4 text-center">Country Code</h3>
-                    <input type="text" name="country_code" placeholder="Country Code (e.g. +1)" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                </div>
-                <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
-                <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="agree" required class="w-5 h-5 accent-purple-400">
-                    <label for="agree" class="text-sm text-blue-200">I agree to the Terms and Conditions</label>
-                </div>
-                <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
-            </form>
-        </div>
-    </div>
-    """
-
-@app.route("/register_submit")
-def register_submit():
-    uid = request.args.get("uid")
-    name = request.args.get("name")
-    email = request.args.get("email")
-    country_code = request.args.get("country_code")
-    phone = request.args.get("phone")
-    address = request.args.get("address")
-    referral_code = request.args.get("referral_code") or ""
-    conn = db()
-    c = conn.cursor()
-    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 WHERE id=?""", (name, email, country_code, phone, address, referral_code, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
-
-# ====================== HOME ======================
+# ====================== HOME (Language Selector যোগ করা হয়েছে) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -161,68 +136,53 @@ def home():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
     if not user:
-        c.execute("INSERT INTO users (id, type, username, first_name) VALUES (?,?,?,?)", (uid, "user", username, first_name))
+        c.execute("INSERT INTO users (id, type, username, first_name, language) VALUES (?,?,?,?,?)", (uid, "user", username, first_name, "en"))
         conn.commit()
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # ADMIN সরাসরি
+    lang = user['language'] or "en"
+    t = lambda k: TEXT.get(lang, TEXT["en"]).get(k, k)
+
     if uid == ADMIN_ID:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple text-2xl">Go to Admin Panel</a></div></div>"""
 
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # VIP + Reward
-    current_vip = get_vip_level(user['balance'])
-    if current_vip > user['vip_level']:
-        bonus = get_vip_bonus(current_vip)
-        now = datetime.now().isoformat()
-        c.execute("UPDATE users SET vip_level=?, reward_balance=reward_balance+?, reward_timestamp=? WHERE id=?", (current_vip, bonus, now, uid))
-        c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Congratulations! You are now VIP {current_vip} - {bonus} USDT reward added!"))
-        conn.commit()
-        c.execute("SELECT * FROM users WHERE id=?", (uid,))
-        user = c.fetchone()
-
-    if user['reward_timestamp'] and user['reward_balance'] > 0:
-        reward_time = datetime.fromisoformat(user['reward_timestamp'])
-        if datetime.now() - reward_time >= timedelta(hours=24):
-            c.execute("UPDATE users SET balance=balance+?, reward_balance=0, reward_timestamp=NULL WHERE id=?", (user['reward_balance'], uid))
-            c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"{user['reward_balance']} USDT Reward Balance has been added to your Main Balance!"))
-            conn.commit()
-            c.execute("SELECT * FROM users WHERE id=?", (uid,))
-            user = c.fetchone()
-
-    c.execute("SELECT message FROM messages WHERE user_id=?", (uid,))
-    msgs = c.fetchall()
-    conn.close()
-
-    badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
-    admin_html = f'<a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">🔐 Admin Panel</a>' if uid == ADMIN_ID else ''
+    # Language Selector (হোমপেজের উপরে)
+    lang_selector = ''.join([f'<a href="/set_lang?lang={code}&id={uid}" class="inline-block mx-2 text-3xl hover:scale-125 transition">{flag}</a>' for code, flag in LANGUAGES.items()])
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-    <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
-    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{user['balance']} USD</h1></div>
-    <div class="glass p-6 mb-8">
-        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user['profit']} USD</div></div>
-        <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
-        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{user['reward_balance']} USD</div></div>
-    </div>
-    <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
-    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
-    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
-    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
-    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
-    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span></div>
-    {admin_html}
-    </div>
+        <!-- Language Selector -->
+        <div class="flex justify-center gap-3 mb-6 bg-white/10 rounded-3xl p-4">
+            {lang_selector}
+        </div>
 
+        <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">{t('title')}</h1></div>
+        <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{user['balance']} USD</h1></div>
+        <div class="glass p-6 mb-8">
+            <div class="flex justify-between text-lg mb-3"><div>📈 <strong>{t('daily_profit')}</strong></div><div class="text-emerald-400 font-semibold">{user['profit']} USD</div></div>
+            <div class="flex justify-between text-lg mb-3"><div>💰 <strong>{t('total_profit')}</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
+            <div class="flex justify-between text-lg"><div>🌟 <strong>{t('reward')}</strong></div><div class="text-purple-400 font-semibold">{user['reward_balance']} USD</div></div>
+        </div>
+        <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 {t('profile')}</a>
+        <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>{t('deposit')}</a>
+        <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>{t('withdraw')}</a>
+        <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>{t('support')}</a>
+        <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">📩 {t('messages')}</h3></div>
+        <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 {t('vip')}</h3><span class="text-cyan-400">→</span></div>
+    </div>
+    """
+
+    # Messages and VIP Modal
+    html += """
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{}</div>
         <div class="p-4 border-t border-gray-700"><button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button></div>
       </div>
     </div>
@@ -245,18 +205,31 @@ def home():
     </div>
 
     <script>
-    function openMessagesModal() {{ document.getElementById('messagesModal').classList.remove('hidden'); document.getElementById('messagesModal').classList.add('flex'); }}
-    function closeMessagesModal() {{ document.getElementById('messagesModal').classList.add('hidden'); document.getElementById('messagesModal').classList.remove('flex'); }}
-    function openVipModal() {{ document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); }}
-    function closeVipModal() {{ document.getElementById('vipModal').classList.add('hidden'); document.getElementById('vipModal').classList.remove('flex'); }}
-    function markAsRead() {{
+    function openMessagesModal() { document.getElementById('messagesModal').classList.remove('hidden'); document.getElementById('messagesModal').classList.add('flex'); }
+    function closeMessagesModal() { document.getElementById('messagesModal').classList.add('hidden'); document.getElementById('messagesModal').classList.remove('flex'); }
+    function openVipModal() { document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); }
+    function closeVipModal() { document.getElementById('vipModal').classList.add('hidden'); document.getElementById('vipModal').classList.remove('flex'); }
+    function markAsRead() {
         const uid = new URLSearchParams(window.location.search).get('id');
         fetch('/clear_messages?id=' + uid).then(() => location.reload());
-    }}
+    }
     </script>
-    """
+    """.format(''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>')
+
     return html
 
+@app.route("/set_lang")
+def set_lang():
+    uid = request.args.get("id")
+    lang = request.args.get("lang", "en")
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET language=? WHERE id=?", (lang, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">Language Changed!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
+
+# ====================== বাকি সব রুট (আগের মতোই) ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -278,7 +251,6 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
-# ====================== MANAGE ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
