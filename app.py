@@ -29,18 +29,18 @@ LANGUAGES = {
     "bg": "🇧🇬 Български"
 }
 
-# ====================== টেক্সট অনুবাদ (User Panel এর জন্য) ======================
+# ====================== টেক্সট অনুবাদ ======================
 TEXT = {
-    "en": {"title": "PulseForge Smart Savings", "balance": "Balance", "daily_profit": "Daily Profit", "total_profit": "Total Profit", "reward": "Reward Balance", "deposit": "Deposit", "withdraw": "Withdraw", "support": "Support", "profile": "Profile", "vip": "VIP System", "messages": "Messages"},
-    "es": {"title": "PulseForge Ahorros Inteligentes", "balance": "Saldo", "daily_profit": "Ganancia Diaria", "total_profit": "Ganancia Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Retirar", "support": "Soporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensajes"},
-    "fr": {"title": "PulseForge Épargne Intelligente", "balance": "Solde", "daily_profit": "Profit Journalier", "total_profit": "Profit Total", "reward": "Solde de Récompense", "deposit": "Déposer", "withdraw": "Retirer", "support": "Support", "profile": "Profil", "vip": "Système VIP", "messages": "Messages"},
-    "de": {"title": "PulseForge Intelligentes Sparen", "balance": "Saldo", "daily_profit": "Täglicher Gewinn", "total_profit": "Gesamtgewinn", "reward": "Belohnungssaldo", "deposit": "Einzahlen", "withdraw": "Abheben", "support": "Support", "profile": "Profil", "vip": "VIP-System", "messages": "Nachrichten"},
-    "it": {"title": "PulseForge Risparmio Intelligente", "balance": "Saldo", "daily_profit": "Profitto Giornaliero", "total_profit": "Profitto Totale", "reward": "Saldo Ricompense", "deposit": "Deposita", "withdraw": "Preleva", "support": "Supporto", "profile": "Profilo", "vip": "Sistema VIP", "messages": "Messaggi"},
-    "pt": {"title": "PulseForge Poupança Inteligente", "balance": "Saldo", "daily_profit": "Lucro Diário", "total_profit": "Lucro Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Sacar", "support": "Suporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensagens"},
-    "pl": {"title": "PulseForge Oszczędności Inteligentne", "balance": "Saldo", "daily_profit": "Zysk Dzienny", "total_profit": "Zysk Całkowity", "reward": "Saldo Nagród", "deposit": "Wpłata", "withdraw": "Wypłata", "support": "Wsparcie", "profile": "Profil", "vip": "System VIP", "messages": "Wiadomości"},
-    "ru": {"title": "PulseForge Умные Сбережения", "balance": "Баланс", "daily_profit": "Ежедневная прибыль", "total_profit": "Общая прибыль", "reward": "Баланс вознаграждений", "deposit": "Депозит", "withdraw": "Вывод", "support": "Поддержка", "profile": "Профиль", "vip": "VIP Система", "messages": "Сообщения"},
-    "nl": {"title": "PulseForge Slimme Spaarrekening", "balance": "Saldo", "daily_profit": "Dagelijkse Winst", "total_profit": "Totale Winst", "reward": "Beloningsaldo", "deposit": "Storten", "withdraw": "Opnemen", "support": "Support", "profile": "Profiel", "vip": "VIP Systeem", "messages": "Berichten"},
-    "sv": {"title": "PulseForge Smarta Sparande", "balance": "Saldo", "daily_profit": "Daglig Vinst", "total_profit": "Total Vinst", "reward": "Belöningsbalans", "deposit": "Insättning", "withdraw": "Uttag", "support": "Support", "profile": "Profil", "vip": "VIP System", "messages": "Meddelanden"}
+    "en": {"title": "PulseForge Smart Savings", "balance": "Balance", "daily_profit": "Daily Profit", "total_profit": "Total Profit", "reward": "Reward Balance", "deposit": "Deposit", "withdraw": "Withdraw", "support": "Support", "profile": "Profile", "vip": "VIP System", "messages": "Messages", "select_lang": "Select Language"},
+    "es": {"title": "PulseForge Ahorros Inteligentes", "balance": "Saldo", "daily_profit": "Ganancia Diaria", "total_profit": "Ganancia Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Retirar", "support": "Soporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensajes", "select_lang": "Seleccionar Idioma"},
+    "fr": {"title": "PulseForge Épargne Intelligente", "balance": "Solde", "daily_profit": "Profit Journalier", "total_profit": "Profit Total", "reward": "Solde de Récompense", "deposit": "Déposer", "withdraw": "Retirer", "support": "Support", "profile": "Profil", "vip": "Système VIP", "messages": "Messages", "select_lang": "Sélectionner la langue"},
+    "de": {"title": "PulseForge Intelligentes Sparen", "balance": "Saldo", "daily_profit": "Täglicher Gewinn", "total_profit": "Gesamtgewinn", "reward": "Belohnungssaldo", "deposit": "Einzahlen", "withdraw": "Abheben", "support": "Support", "profile": "Profil", "vip": "VIP-System", "messages": "Nachrichten", "select_lang": "Sprache wählen"},
+    "it": {"title": "PulseForge Risparmio Intelligente", "balance": "Saldo", "daily_profit": "Profitto Giornaliero", "total_profit": "Profitto Totale", "reward": "Saldo Ricompense", "deposit": "Deposita", "withdraw": "Preleva", "support": "Supporto", "profile": "Profilo", "vip": "Sistema VIP", "messages": "Messaggi", "select_lang": "Seleziona Lingua"},
+    "pt": {"title": "PulseForge Poupança Inteligente", "balance": "Saldo", "daily_profit": "Lucro Diário", "total_profit": "Lucro Total", "reward": "Saldo de Recompensa", "deposit": "Depositar", "withdraw": "Sacar", "support": "Suporte", "profile": "Perfil", "vip": "Sistema VIP", "messages": "Mensagens", "select_lang": "Selecionar Idioma"},
+    "pl": {"title": "PulseForge Oszczędności Inteligentne", "balance": "Saldo", "daily_profit": "Zysk Dzienny", "total_profit": "Zysk Całkowity", "reward": "Saldo Nagród", "deposit": "Wpłata", "withdraw": "Wypłata", "support": "Wsparcie", "profile": "Profil", "vip": "System VIP", "messages": "Wiadomości", "select_lang": "Wybierz Język"},
+    "ru": {"title": "PulseForge Умные Сбережения", "balance": "Баланс", "daily_profit": "Ежедневная прибыль", "total_profit": "Общая прибыль", "reward": "Баланс вознаграждений", "deposit": "Депозит", "withdraw": "Вывод", "support": "Поддержка", "profile": "Профиль", "vip": "VIP Система", "messages": "Сообщения", "select_lang": "Выбрать язык"},
+    "nl": {"title": "PulseForge Slimme Spaarrekening", "balance": "Saldo", "daily_profit": "Dagelijkse Winst", "total_profit": "Totale Winst", "reward": "Beloningsaldo", "deposit": "Storten", "withdraw": "Opnemen", "support": "Support", "profile": "Profiel", "vip": "VIP Systeem", "messages": "Berichten", "select_lang": "Taal kiezen"},
+    "sv": {"title": "PulseForge Smarta Sparande", "balance": "Saldo", "daily_profit": "Daglig Vinst", "total_profit": "Total Vinst", "reward": "Belöningsbalans", "deposit": "Insättning", "withdraw": "Uttag", "support": "Support", "profile": "Profil", "vip": "VIP System", "messages": "Meddelanden", "select_lang": "Välj språk"}
 }
 
 def get_text(lang, key):
@@ -64,7 +64,6 @@ def init_db():
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0,
                     language TEXT DEFAULT "en")''')
     
-    # Safe migration for language column
     try:
         c.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en'")
     except:
@@ -94,6 +93,12 @@ def get_vip_bonus(level):
     bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
     return bonuses.get(level, 0)
 
+TRC = "TNWvYkycZFUfWzADKUQRjiZmRJWRhbU7Hm"
+ERC = "0xFc9B81aa8e1921A2A4cd2ca7B46489c446F6c059"
+
+ADMIN_ID = "8671125457"
+BOT_USERNAME = "pulseofficialsbot"
+
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -121,7 +126,7 @@ def ui():
     </style>
     """
 
-# ====================== HOME (Language Selector যোগ করা হয়েছে) ======================
+# ====================== HOME ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -150,7 +155,7 @@ def home():
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # Language Selector (হোমপেজের উপরে)
+    # Language Selector
     lang_selector = ''.join([f'<a href="/set_lang?lang={code}&id={uid}" class="inline-block mx-2 text-3xl hover:scale-125 transition">{flag}</a>' for code, flag in LANGUAGES.items()])
 
     html = f"""{ui()}
@@ -176,7 +181,6 @@ def home():
     </div>
     """
 
-    # Messages and VIP Modal
     html += """
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
@@ -230,6 +234,56 @@ def set_lang():
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">Language Changed!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
 # ====================== বাকি সব রুট (আগের মতোই) ======================
+@app.route("/register")
+def register():
+    uid = request.args.get("id")
+    return f"""{ui()}
+    <div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center">
+        <div class="diamond-glass p-8 rounded-3xl w-full">
+            <div class="flex justify-center items-center gap-3 mb-6">
+                <span class="text-6xl">🚀</span>
+                <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
+            </div>
+            <form action="/register_submit" class="space-y-5">
+                <input type="hidden" name="uid" value="{uid}">
+                <input type="text" name="name" placeholder="Your Full Name" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                <div class="glass p-5 rounded-3xl">
+                    <h3 class="text-blue-300 text-lg mb-4 text-center">Country Code</h3>
+                    <input type="text" name="country_code" placeholder="Country Code (e.g. +1)" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <input type="tel" name="phone" placeholder="Phone Number" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                <textarea name="address" rows="2" placeholder="Full Address" required class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
+                <input type="text" name="referral_code" placeholder="Referral Code (Optional)" class="w-full p-4 rounded-2xl bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="agree" required class="w-5 h-5 accent-purple-400">
+                    <label for="agree" class="text-sm text-blue-200">I agree to the Terms and Conditions</label>
+                </div>
+                <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
+            </form>
+        </div>
+    </div>
+    """
+
+@app.route("/register_submit")
+def register_submit():
+    uid = request.args.get("uid")
+    name = request.args.get("name")
+    email = request.args.get("email")
+    country_code = request.args.get("country_code")
+    phone = request.args.get("phone")
+    address = request.args.get("address")
+    referral_code = request.args.get("referral_code") or ""
+    conn = db()
+    c = conn.cursor()
+    c.execute("""UPDATE users SET name=?, email=?, country_code=?, phone=?, address=?, referral_code=?, registered=1 WHERE id=?""", (name, email, country_code, phone, address, referral_code, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
+
+# ====================== বাকি সব রুট (আগের মতোই) ======================
+# (এখান থেকে শেষ পর্যন্ত তোমার দেওয়া কোডের বাকি অংশ অপরিবর্তিত রাখা হয়েছে)
+
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -251,6 +305,7 @@ def clear_messages():
     conn.close()
     return "Messages cleared"
 
+# ====================== MANAGE ======================
 @app.route("/manage")
 def manage():
     uid = request.args.get("uid")
@@ -261,6 +316,9 @@ def manage():
     <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
     <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
+
+# ====================== বাকি সব রুট (আগের মতোই) ======================
+# (এখান থেকে শেষ পর্যন্ত তোমার দেওয়া কোডের বাকি অংশ অপরিবর্তিত আছে)
 
 @app.route("/remove_reward")
 def remove_reward():
@@ -398,6 +456,7 @@ def admin():
     """
     return html
 
+# ====================== বাকি সব রুট ======================
 @app.route("/all_user_info")
 def all_user_info():
     conn = db()
@@ -408,7 +467,6 @@ def all_user_info():
     user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']} USD</p></div>""" for u in users])
     return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2><div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div><a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a></div>"""
 
-# ====================== DEPOSIT / WITHDRAW ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
