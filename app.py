@@ -97,13 +97,15 @@ def process_daily_profit(uid):
     if not user or user['daily_profit_percent'] <= 0:
         conn.close()
         return
+
     last_time = user['last_daily_profit_timestamp']
     if last_time:
         last = datetime.fromisoformat(last_time)
         if datetime.now() - last < timedelta(hours=24):
             conn.close()
             return
-    daily_amount = user['balance'] * (user['daily_profit_percent'] / 100)
+
+    daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
     if daily_amount > 0:
         c.execute("UPDATE users SET balance = balance + ?, total_profit = total_profit + ?, last_daily_profit_timestamp = ? WHERE id=?",
                   (daily_amount, daily_amount, datetime.now().isoformat(), uid))
@@ -182,7 +184,6 @@ def home():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
 
-    # Negative fix
     if user['balance'] < 0:
         c.execute("UPDATE users SET balance = 0 WHERE id=?", (uid,))
     if user['reward_balance'] < 0:
@@ -226,16 +227,16 @@ def home():
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
     admin_html = f'<a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">🔐 Admin Panel</a>' if uid == ADMIN_ID else ''
 
-    daily_amount = user['balance'] * (user['daily_profit_percent'] / 100)
+    daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
     <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
-    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{max(0, user['balance'])} USD</h1></div>
+    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{max(0, user['balance']):.2f} USD</h1></div>
     <div class="glass p-6 mb-8">
         <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{daily_amount:.2f} USD</div></div>
-        <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
-        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{max(0, user['reward_balance'])} USD</div></div>
+        <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']:.2f} USD</div></div>
+        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{max(0, user['reward_balance']):.2f} USD</div></div>
     </div>
     <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
@@ -296,7 +297,6 @@ def manage():
     <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
     <div class="glass mt-3 p-6"><form action='/set_daily_profit'><input type='hidden' name='uid' value='{uid}'><input name='percent' placeholder='Daily Profit % (e.g. 2.5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-teal-500 w-full'>Set Daily Profit %</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/adjust_total_profit'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add/Remove Total Profit' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-amber-500 w-full'>Adjust Total Profit</button></form></div>
     <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
 
 @app.route("/set_daily_profit")
@@ -309,17 +309,6 @@ def set_daily_profit():
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Daily Profit {percent}% Set</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
-@app.route("/adjust_total_profit")
-def adjust_total_profit():
-    uid = request.args.get("uid")
-    amount = float(request.args.get("amount", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET total_profit = total_profit + ? WHERE id=?", (amount, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Total Profit Adjusted</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/remove_reward")
 def remove_reward():
@@ -428,7 +417,7 @@ def admin():
     badge_dep = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_dep}</span>' if pending_dep > 0 else ''
     badge_wd = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{pending_wd}</span>' if pending_wd > 0 else ''
 
-    user_list_html = "".join([f"""<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><span class="font-medium text-white">@{u['username'] or u['first_name'] or u['id']}</span><br><span class="text-emerald-400 text-sm">{u['balance']} USD</span></div><a href='/manage?uid={u['id']}' class="text-blue-400 font-medium">Manage</a></div>""" for u in users])
+    user_list_html = "".join([f"""<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><span class="font-medium text-white">@{u['username'] or u['first_name'] or u['id']}</span><br><span class="text-emerald-400 text-sm">{u['balance']:.2f} USD</span></div><a href='/manage?uid={u['id']}' class="text-blue-400 font-medium">Manage</a></div>""" for u in users])
 
     support_html = "".join([f"""<div class="glass p-5"><p><strong>From:</strong> @{s['username']} (ID: {s['user_id']})</p><p class="mt-2">{s['msg']}</p><form action='/reply_support' class="mt-4"><input type='hidden' name='uid' value='{s['user_id']}'><input name='reply' placeholder="Reply..." class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Send Reply</button></form></div>""" for s in sup])
 
@@ -464,7 +453,7 @@ def all_user_info():
     c.execute("SELECT id, name, email, phone, country_code, address, referral_code, balance FROM users WHERE registered=1")
     users = c.fetchall()
     conn.close()
-    user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']} USD</p></div>""" for u in users])
+    user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']:.2f} USD</p></div>""" for u in users])
     return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2><div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div><a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a></div>"""
 
 # ====================== DEPOSIT / WITHDRAW ======================
