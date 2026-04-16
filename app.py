@@ -52,6 +52,8 @@ def init_db():
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
                     reward_balance REAL DEFAULT 0, reward_timestamp TEXT,
+                    daily_profit_percent REAL DEFAULT 0,
+                    last_daily_profit_timestamp TEXT,
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
     
@@ -73,8 +75,13 @@ def init_db():
                     id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, 
                     network TEXT, status TEXT, reason TEXT)''')
     
-    # Safe migration
-    for col, typ in [("name","TEXT"), ("email","TEXT"), ("phone","TEXT"), ("country_code","TEXT"), ("address","TEXT"), ("referral_code","TEXT"), ("registered","INTEGER DEFAULT 0")]:
+    # Safe migration (পুরনো ডেটা একদম নিরাপদ থাকবে)
+    for col, typ in [
+        ("daily_profit_percent", "REAL DEFAULT 0"),
+        ("last_daily_profit_timestamp", "TEXT"),
+        ("name","TEXT"), ("email","TEXT"), ("phone","TEXT"), ("country_code","TEXT"),
+        ("address","TEXT"), ("referral_code","TEXT"), ("registered","INTEGER DEFAULT 0")
+    ]:
         try:
             c.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
         except:
@@ -97,6 +104,30 @@ def get_vip_level(balance):
 def get_vip_bonus(level):
     bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
     return bonuses.get(level, 0)
+
+# ====================== DAILY PROFIT LOGIC ======================
+def process_daily_profit(uid):
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT balance, daily_profit_percent, last_daily_profit_timestamp FROM users WHERE id=?", (uid,))
+    user = c.fetchone()
+    if not user or user['daily_profit_percent'] <= 0:
+        conn.close()
+        return
+
+    last_time = user['last_daily_profit_timestamp']
+    if last_time:
+        last = datetime.fromisoformat(last_time)
+        if datetime.now() - last < timedelta(hours=24):
+            conn.close()
+            return
+
+    daily_amount = user['balance'] * (user['daily_profit_percent'] / 100)
+    if daily_amount > 0:
+        c.execute("UPDATE users SET balance = balance + ?, total_profit = total_profit + ?, last_daily_profit_timestamp = ? WHERE id=?",
+                  (daily_amount, daily_amount, datetime.now().isoformat(), uid))
+    conn.commit()
+    conn.close()
 
 # ====================== REGISTRATION ======================
 @app.route("/register")
@@ -166,7 +197,20 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # ADMIN সরাসরি
+    # Daily Profit Process
+    process_daily_profit(uid)
+    c.execute("SELECT * FROM users WHERE id=?", (uid,))
+    user = c.fetchone()
+
+    # Negative balance fix
+    if user['balance'] < 0:
+        c.execute("UPDATE users SET balance = 0 WHERE id=?", (uid,))
+    if user['reward_balance'] < 0:
+        c.execute("UPDATE users SET reward_balance = 0 WHERE id=?", (uid,))
+    conn.commit()
+    conn.close()
+
+    # ADMIN
     if uid == ADMIN_ID:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple text-2xl">Go to Admin Panel</a></div></div>"""
 
@@ -178,21 +222,25 @@ def home():
     if current_vip > user['vip_level']:
         bonus = get_vip_bonus(current_vip)
         now = datetime.now().isoformat()
+        conn = db()
+        c = conn.cursor()
         c.execute("UPDATE users SET vip_level=?, reward_balance=reward_balance+?, reward_timestamp=? WHERE id=?", (current_vip, bonus, now, uid))
         c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"Congratulations! You are now VIP {current_vip} - {bonus} USDT reward added!"))
         conn.commit()
-        c.execute("SELECT * FROM users WHERE id=?", (uid,))
-        user = c.fetchone()
+        conn.close()
 
     if user['reward_timestamp'] and user['reward_balance'] > 0:
         reward_time = datetime.fromisoformat(user['reward_timestamp'])
         if datetime.now() - reward_time >= timedelta(hours=24):
+            conn = db()
+            c = conn.cursor()
             c.execute("UPDATE users SET balance=balance+?, reward_balance=0, reward_timestamp=NULL WHERE id=?", (user['reward_balance'], uid))
             c.execute("INSERT INTO messages VALUES(NULL,?,?)", (uid, f"{user['reward_balance']} USDT Reward Balance has been added to your Main Balance!"))
             conn.commit()
-            c.execute("SELECT * FROM users WHERE id=?", (uid,))
-            user = c.fetchone()
+            conn.close()
 
+    conn = db()
+    c = conn.cursor()
     c.execute("SELECT message FROM messages WHERE user_id=?", (uid,))
     msgs = c.fetchall()
     conn.close()
@@ -203,11 +251,11 @@ def home():
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
     <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
-    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{user['balance']} USD</h1></div>
+    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{max(0, user['balance'])} USD</h1></div>
     <div class="glass p-6 mb-8">
-        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user['profit']} USD</div></div>
+        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user['daily_profit_percent']}%</div></div>
         <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
-        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{user['reward_balance']} USD</div></div>
+        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{max(0, user['reward_balance'])} USD</div></div>
     </div>
     <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
@@ -265,7 +313,7 @@ def profile():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
     conn.close()
-    html = f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2><div class="space-y-4 text-lg"><div><strong>Main Balance:</strong> <span class="text-blue-300">{user['balance']} USD</span></div><div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user['profit']} USD</span></div><div><strong>Total Profit:</strong> <span class="text-emerald-400">{user['total_profit']} USD</span></div><div><strong>Reward Balance:</strong> <span class="text-purple-400">{user['reward_balance']} USD</span></div><div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user['vip_level']}</span></div></div></div><a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a></div>"""
+    html = f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2><div class="space-y-4 text-lg"><div><strong>Main Balance:</strong> <span class="text-blue-300">{max(0, user['balance'])} USD</span></div><div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user['daily_profit_percent']}%</span></div><div><strong>Total Profit:</strong> <span class="text-emerald-400">{user['total_profit']} USD</span></div><div><strong>Reward Balance:</strong> <span class="text-purple-400">{max(0, user['reward_balance'])} USD</span></div><div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user['vip_level']}</span></div></div></div><a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a></div>"""
     return html
 
 @app.route("/clear_messages")
@@ -288,7 +336,19 @@ def manage():
     <div class="glass mt-3 p-6"><form action='/remove_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Reward Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/set_daily_profit'><input type='hidden' name='uid' value='{uid}'><input name='percent' placeholder='Daily Profit % (e.g. 2.5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-teal-500 w-full'>Set Daily Profit %</button></form></div>
     <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
+
+@app.route("/set_daily_profit")
+def set_daily_profit():
+    uid = request.args.get("uid")
+    percent = float(request.args.get("percent", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET daily_profit_percent=? WHERE id=?", (percent, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Daily Profit {percent}% Set</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/remove_reward")
 def remove_reward():
