@@ -158,7 +158,7 @@ def register_submit():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
 
-# ====================== HOME ======================
+# ====================== HOME (Fixed) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -195,6 +195,7 @@ def home():
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
+    # VIP Level Check
     current_vip = get_vip_level(user['balance'])
     if current_vip > user['vip_level']:
         bonus = get_vip_bonus(current_vip)
@@ -206,6 +207,7 @@ def home():
         conn.commit()
         conn.close()
 
+    # Reward Balance Auto Add
     if user['reward_timestamp'] and user['reward_balance'] > 0:
         reward_time = datetime.fromisoformat(user['reward_timestamp'])
         if datetime.now() - reward_time >= timedelta(hours=24):
@@ -216,6 +218,7 @@ def home():
             conn.commit()
             conn.close()
 
+    # Get Messages for badge
     conn = db()
     c = conn.cursor()
     c.execute("SELECT message FROM messages WHERE user_id=?", (uid,))
@@ -240,51 +243,93 @@ def home():
     <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
     <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
     <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
-    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}</div>
-    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span></div>
+    
+    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
+    </div>
+    
+    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
+    </div>
     {admin_html}
     </div>
 
+    <!-- Messages Modal -->
     <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
-        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">{''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}</div>
-        <div class="p-4 border-t border-gray-700"><button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button></div>
+        <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
+            {''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}
+        </div>
+        <div class="p-4 border-t border-gray-700">
+            <button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
+        </div>
       </div>
     </div>
 
+    <!-- VIP Modal -->
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
       <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">🎁 VIP Rewards Program</div>
         <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-6 text-white text-sm">
           <div class="text-center text-blue-300 text-lg font-bold">Upgrade your VIP level to earn more rewards!</div>
-          <div>🌟 <strong>VIP1</strong> - 500 USDT reward (50 USDT add)</div>
-          <div>🌟 <strong>VIP2</strong> - 1000 USDT reward (100 USDT add)</div>
-          <div>🌟 <strong>VIP3</strong> - 2000 USDT reward (200 USDT add)</div>
-          <div>🌟 <strong>VIP4</strong> - 5000 USDT reward (500 USDT add)</div>
-          <div>🌟 <strong>VIP5</strong> - 10000 USDT reward (1000 USDT add)</div>
-          <div>🌟 <strong>VIP6</strong> - 20000 USDT reward (2000 USDT add)</div>
-          <div>🌟 <strong>VIP7</strong> - 50000 USDT reward (5000 USDT add)</div>
+          <div>🌟 <strong>VIP1</strong> - 500 USDT (50 USDT reward)</div>
+          <div>🌟 <strong>VIP2</strong> - 1000 USDT (100 USDT reward)</div>
+          <div>🌟 <strong>VIP3</strong> - 2000 USDT (200 USDT reward)</div>
+          <div>🌟 <strong>VIP4</strong> - 5000 USDT (500 USDT reward)</div>
+          <div>🌟 <strong>VIP5</strong> - 10000 USDT (1000 USDT reward)</div>
+          <div>🌟 <strong>VIP6</strong> - 20000 USDT (2000 USDT reward)</div>
+          <div>🌟 <strong>VIP7</strong> - 50000 USDT (5000 USDT reward)</div>
         </div>
       </div>
     </div>
 
     <script>
-    function openMessagesModal() {{ document.getElementById('messagesModal').classList.remove('hidden'); document.getElementById('messagesModal').classList.add('flex'); }}
-    function closeMessagesModal() {{ document.getElementById('messagesModal').classList.add('hidden'); document.getElementById('messagesModal').classList.remove('flex'); }}
-    function openVipModal() {{ document.getElementById('vipModal').classList.remove('hidden'); document.getElementById('vipModal').classList.add('flex'); }}
-    function closeVipModal() {{ document.getElementById('vipModal').classList.add('hidden'); document.getElementById('vipModal').classList.remove('flex'); }}
+    function openMessagesModal() {{ 
+        document.getElementById('messagesModal').classList.remove('hidden'); 
+        document.getElementById('messagesModal').classList.add('flex'); 
+    }}
+    function closeMessagesModal() {{ 
+        document.getElementById('messagesModal').classList.add('hidden'); 
+        document.getElementById('messagesModal').classList.remove('flex'); 
+    }}
+    function openVipModal() {{ 
+        document.getElementById('vipModal').classList.remove('hidden'); 
+        document.getElementById('vipModal').classList.add('flex'); 
+    }}
+    function closeVipModal() {{ 
+        document.getElementById('vipModal').classList.add('hidden'); 
+        document.getElementById('vipModal').classList.remove('flex'); 
+    }}
+    
     function markAsRead() {{
         const uid = new URLSearchParams(window.location.search).get('id');
-        fetch('/clear_messages?id=' + uid).then(() => location.reload());
+        fetch('/clear_messages?id=' + uid)
+            .then(() => {{
+                closeMessagesModal();
+                location.reload();
+            }})
+            .catch(() => location.reload());
     }}
     </script>
     """
     return html
 
-# ====================== PROFILE (এখন পুরোপুরি কাজ করবে) ======================
+# ====================== CLEAR MESSAGES ======================
+@app.route("/clear_messages")
+def clear_messages():
+    uid = request.args.get("id")
+    if uid:
+        conn = db()
+        c = conn.cursor()
+        c.execute("DELETE FROM messages WHERE user_id = ?", (uid,))
+        conn.commit()
+        conn.close()
+    return "OK"
+
+# ====================== PROFILE ======================
 @app.route("/profile")
 def profile():
     uid = request.args.get("id")
@@ -451,7 +496,7 @@ def admin():
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-4">
-    <div class="text-center py-4 bg-red-600 text-white text-xl font-bold mb-6 rounded-3xl">🚀 NEW FULL CODE DEPLOYED</div>
+    <div class="text-center py-4 bg-red-600 text-white text-xl font-bold mb-6 rounded-3xl">🚀 Admin Panel</div>
     <h2 class="text-blue-400 text-center text-3xl mb-6 glow">🔐 Admin Panel</h2>
     <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
     <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
@@ -484,7 +529,7 @@ def all_user_info():
     user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']:.2f} USD</p></div>""" for u in users])
     return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2><div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div><a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a></div>"""
 
-# ====================== DEPOSIT / WITHDRAW ======================
+# ====================== DEPOSIT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
@@ -507,6 +552,7 @@ def dep3():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
@@ -521,6 +567,7 @@ def w2():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
+# ====================== DEPOSITS & WITHDRAWS ADMIN ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
