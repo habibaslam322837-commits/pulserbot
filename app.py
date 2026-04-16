@@ -97,14 +97,12 @@ def process_daily_profit(uid):
     if not user or user['daily_profit_percent'] <= 0:
         conn.close()
         return
-
     last_time = user['last_daily_profit_timestamp']
     if last_time:
         last = datetime.fromisoformat(last_time)
         if datetime.now() - last < timedelta(hours=24):
             conn.close()
             return
-
     daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
     if daily_amount > 0:
         c.execute("UPDATE users SET balance = balance + ?, total_profit = total_profit + ?, last_daily_profit_timestamp = ? WHERE id=?",
@@ -283,6 +281,36 @@ def home():
         fetch('/clear_messages?id=' + uid).then(() => location.reload());
     }}
     </script>
+    """
+    return html
+
+# ====================== PROFILE (এখন পুরোপুরি কাজ করবে) ======================
+@app.route("/profile")
+def profile():
+    uid = request.args.get("id")
+    conn = db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id=?", (uid,))
+    user = c.fetchone()
+    conn.close()
+
+    daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
+
+    html = f"""{ui()}
+    <div class="max-w-md mx-auto p-5 min-h-screen">
+        <div class="diamond-glass p-8 rounded-3xl">
+            <h2 class="text-blue-400 text-3xl text-center mb-8 neon-purple">👤 Profile Summary</h2>
+            <div class="space-y-6 text-lg">
+                <div class="flex justify-between"><span class="text-white/80">Main Balance</span><span class="text-blue-300 font-bold">{max(0, user['balance']):.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Daily Profit</span><span class="text-emerald-400 font-bold">{daily_amount:.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Total Profit</span><span class="text-emerald-400 font-bold">{user['total_profit']:.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Reward Balance</span><span class="text-purple-400 font-bold">{max(0, user['reward_balance']):.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">VIP Level</span><span class="text-purple-400 font-bold">VIP {user['vip_level']}</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Daily Profit %</span><span class="text-teal-400 font-bold">{user['daily_profit_percent']}%</span></div>
+            </div>
+        </div>
+        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-10">← Back to Home</a>
+    </div>
     """
     return html
 
