@@ -46,8 +46,6 @@ def ui():
 def init_db():
     conn = db()
     c = conn.cursor()
-    
-    # USERS
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, type TEXT, balance REAL DEFAULT 0,
                     profit REAL DEFAULT 0, total_profit REAL DEFAULT 0, vip_level INTEGER DEFAULT 0,
@@ -57,25 +55,11 @@ def init_db():
                     username TEXT, first_name TEXT, name TEXT, email TEXT, phone TEXT, 
                     country_code TEXT, address TEXT, referral_code TEXT, registered INTEGER DEFAULT 0)''')
     
-    # MESSAGES
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY, user_id TEXT, message TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, user_id TEXT, message TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS support (id INTEGER PRIMARY KEY, user_id TEXT, username TEXT, sender TEXT, msg TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS deposits (id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, network TEXT, txid TEXT, status TEXT, reason TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, network TEXT, status TEXT, reason TEXT)''')
     
-    # SUPPORT
-    c.execute('''CREATE TABLE IF NOT EXISTS support (
-                    id INTEGER PRIMARY KEY, user_id TEXT, username TEXT, sender TEXT, msg TEXT)''')
-    
-    # DEPOSITS
-    c.execute('''CREATE TABLE IF NOT EXISTS deposits (
-                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, network TEXT, 
-                    txid TEXT, status TEXT, reason TEXT)''')
-    
-    # WITHDRAWS
-    c.execute('''CREATE TABLE IF NOT EXISTS withdraws (
-                    id INTEGER PRIMARY KEY, user_id TEXT, amount REAL, address TEXT, 
-                    network TEXT, status TEXT, reason TEXT)''')
-    
-    # Safe migration (পুরনো ডেটা একদম নিরাপদ থাকবে)
     for col, typ in [
         ("daily_profit_percent", "REAL DEFAULT 0"),
         ("last_daily_profit_timestamp", "TEXT"),
@@ -105,7 +89,6 @@ def get_vip_bonus(level):
     bonuses = {1:50, 2:100, 3:200, 4:500, 5:1000, 6:2000, 7:5000}
     return bonuses.get(level, 0)
 
-# ====================== DAILY PROFIT LOGIC ======================
 def process_daily_profit(uid):
     conn = db()
     c = conn.cursor()
@@ -114,14 +97,12 @@ def process_daily_profit(uid):
     if not user or user['daily_profit_percent'] <= 0:
         conn.close()
         return
-
     last_time = user['last_daily_profit_timestamp']
     if last_time:
         last = datetime.fromisoformat(last_time)
         if datetime.now() - last < timedelta(hours=24):
             conn.close()
             return
-
     daily_amount = user['balance'] * (user['daily_profit_percent'] / 100)
     if daily_amount > 0:
         c.execute("UPDATE users SET balance = balance + ?, total_profit = total_profit + ?, last_daily_profit_timestamp = ? WHERE id=?",
@@ -197,12 +178,11 @@ def home():
         c.execute("SELECT * FROM users WHERE id=?", (uid,))
         user = c.fetchone()
 
-    # Daily Profit Process
     process_daily_profit(uid)
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
 
-    # Negative balance fix
+    # Negative fix
     if user['balance'] < 0:
         c.execute("UPDATE users SET balance = 0 WHERE id=?", (uid,))
     if user['reward_balance'] < 0:
@@ -210,14 +190,12 @@ def home():
     conn.commit()
     conn.close()
 
-    # ADMIN
     if uid == ADMIN_ID:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome Admin!</h2><a href="/admin?id={uid}" class="btn bg-gradient-to-r from-purple-600 to-blue-600 text-white neon-purple text-2xl">Go to Admin Panel</a></div></div>"""
 
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
-    # VIP + Reward
     current_vip = get_vip_level(user['balance'])
     if current_vip > user['vip_level']:
         bonus = get_vip_bonus(current_vip)
@@ -248,12 +226,14 @@ def home():
     badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
     admin_html = f'<a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">🔐 Admin Panel</a>' if uid == ADMIN_ID else ''
 
+    daily_amount = user['balance'] * (user['daily_profit_percent'] / 100)
+
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
     <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
     <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{max(0, user['balance'])} USD</h1></div>
     <div class="glass p-6 mb-8">
-        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{user['daily_profit_percent']}%</div></div>
+        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{daily_amount:.2f} USD</div></div>
         <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']} USD</div></div>
         <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{max(0, user['reward_balance'])} USD</div></div>
     </div>
@@ -305,27 +285,6 @@ def home():
     """
     return html
 
-@app.route("/profile")
-def profile():
-    uid = request.args.get("id")
-    conn = db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=?", (uid,))
-    user = c.fetchone()
-    conn.close()
-    html = f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">👤 Profile Summary</h2><div class="space-y-4 text-lg"><div><strong>Main Balance:</strong> <span class="text-blue-300">{max(0, user['balance'])} USD</span></div><div><strong>Daily Profit:</strong> <span class="text-emerald-400">{user['daily_profit_percent']}%</span></div><div><strong>Total Profit:</strong> <span class="text-emerald-400">{user['total_profit']} USD</span></div><div><strong>Reward Balance:</strong> <span class="text-purple-400">{max(0, user['reward_balance'])} USD</span></div><div><strong>VIP Level:</strong> <span class="text-purple-400">VIP {user['vip_level']}</span></div></div></div><a href="/?id={uid}" class="btn bg-gray-500 text-white mt-8">← Back to Main Menu</a></div>"""
-    return html
-
-@app.route("/clear_messages")
-def clear_messages():
-    uid = request.args.get("id")
-    conn = db()
-    c = conn.cursor()
-    c.execute("DELETE FROM messages WHERE user_id=?", (uid,))
-    conn.commit()
-    conn.close()
-    return "Messages cleared"
-
 # ====================== MANAGE ======================
 @app.route("/manage")
 def manage():
@@ -337,6 +296,7 @@ def manage():
     <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
     <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
     <div class="glass mt-3 p-6"><form action='/set_daily_profit'><input type='hidden' name='uid' value='{uid}'><input name='percent' placeholder='Daily Profit % (e.g. 2.5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-teal-500 w-full'>Set Daily Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/adjust_total_profit'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add/Remove Total Profit' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-amber-500 w-full'>Adjust Total Profit</button></form></div>
     <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
 
 @app.route("/set_daily_profit")
@@ -349,6 +309,17 @@ def set_daily_profit():
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Daily Profit {percent}% Set</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/adjust_total_profit")
+def adjust_total_profit():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET total_profit = total_profit + ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Total Profit Adjusted</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/remove_reward")
 def remove_reward():
