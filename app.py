@@ -19,44 +19,27 @@ BOT_USERNAME = "pulseofficialsbot"
 def ui():
     return """
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
-    
-    function initTelegram() {
-        tg.setHeaderColor(tg.themeParams.header_bg_color || '#1a0f2e');
-        tg.setBackgroundColor(tg.themeParams.bg_color || '#1a0f2e');
-    }
-    initTelegram();
-
-    function haptic(type = 'medium') {
-        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred(type);
+    tg.setHeaderColor('#1a0f2e');
+    const user = tg.initDataUnsafe?.user;
+    if (window.location.pathname === '/' && user && !window.location.search.includes("id=")) {
+        window.location.href = '/?id=' + user.id + '&username=' + (user.username || '') + '&first_name=' + encodeURIComponent(user.first_name || '');
     }
     </script>
     <style>
     body {background: linear-gradient(135deg, #1a0f2e, #2e0f4d); color: #e0f0ff; font-family: 'Inter', system-ui;}
-    .diamond-glass {
-        background: linear-gradient(145deg, rgba(139,92,246,0.25), rgba(139,92,246,0.08));
-        backdrop-filter: blur(40px);
-        border: 2px solid rgba(139,92,246,0.7);
-        box-shadow: 0 0 70px rgba(139,92,246,0.95), inset 0 0 40px rgba(255,255,255,0.6);
-        border-radius: 28px;
-    }
-    .neon-purple {text-shadow: 0 0 20px #a855f7, 0 0 40px #a855f7, 0 0 80px #a855f7;}
-    .neon-glow {animation: neonPulse 2.5s ease-in-out infinite alternate;}
-    @keyframes neonPulse {
-        from {text-shadow: 0 0 20px #a855f7, 0 0 40px #a855f7;}
-        to {text-shadow: 0 0 35px #a855f7, 0 0 80px #a855f7, 0 0 130px #a855f7;}
-    }
-    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 40px rgba(139,92,246,0.8);}
-    .btn:active {transform: scale(0.92); box-shadow: 0 0 50px rgba(139,92,246,1);}
-    .balance-float {animation: floatBalance 3.5s ease-in-out infinite;}
-    @keyframes floatBalance {0%, 100% {transform: translateY(0);} 50% {transform: translateY(-15px);}}
-    .modal {animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);}
-    @keyframes modalPop {from {opacity: 0; transform: translateY(120px) scale(0.9);} to {opacity: 1; transform: translateY(0) scale(1);}}
+    .diamond-glass {background: linear-gradient(145deg, rgba(139,92,246,0.22), rgba(139,92,246,0.08)); backdrop-filter: blur(35px); border: 2px solid rgba(139,92,246,0.6); box-shadow: 0 0 60px rgba(139,92,246,0.9), inset 0 0 35px rgba(255,255,255,0.5); border-radius: 28px;}
+    .neon-purple {text-shadow: 0 0 30px #a855f7, 0 0 70px #a855f7, 0 0 100px #a855f7;}
+    .neon-blue {text-shadow: 0 0 30px #22d3ee, 0 0 70px #22d3ee, 0 0 100px #22d3ee;}
+    .btn {padding: 18px; border-radius: 9999px; text-align: center; display: block; font-weight: 700; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1.15rem; box-shadow: 0 0 40px rgba(139,92,246,0.8);}
+    .btn:hover {transform: scale(1.1); box-shadow: 0 0 65px rgba(139,92,246,1);}
+    .glow {animation: glow 1.8s ease-in-out infinite alternate;}
+    @keyframes glow { from {text-shadow: 0 0 20px #a855f7;} to {text-shadow: 0 0 70px #a855f7, 0 0 110px #a855f7;} }
+    .profile-btn {background: linear-gradient(90deg, #22d3ee, #a855f7); color: #0f172a; box-shadow: 0 0 50px #a855f7; font-size: 1.3rem; font-weight: 800;}
     </style>
     """
 
@@ -136,7 +119,7 @@ def register():
         <div class="diamond-glass p-8 rounded-3xl w-full">
             <div class="flex justify-center items-center gap-3 mb-6">
                 <span class="text-6xl">🚀</span>
-                <h1 class="text-4xl font-bold neon-purple neon-glow">PulseForge Smart Savings</h1>
+                <h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1>
             </div>
             <form action="/register_submit" class="space-y-5">
                 <input type="hidden" name="uid" value="{uid}">
@@ -153,7 +136,7 @@ def register():
                     <input type="checkbox" id="agree" required class="w-5 h-5 accent-purple-400">
                     <label for="agree" class="text-sm text-blue-200">I agree to the Terms and Conditions</label>
                 </div>
-                <button type="submit" onclick="haptic('heavy')" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
+                <button type="submit" class="btn w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue glow">Register Now</button>
             </form>
         </div>
     </div>
@@ -175,7 +158,7 @@ def register_submit():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="diamond-glass p-8 rounded-3xl"><h2 class="text-green-400 text-3xl mb-4">✅ Registration Successful!</h2><a href="/?id={uid}" class="btn bg-green-500 text-white">Go to Dashboard</a></div></div>"""
 
-# ====================== HOME (Advanced Animation) ======================
+# ====================== HOME (Fixed) ======================
 @app.route("/")
 def home():
     uid = request.args.get("id")
@@ -212,6 +195,7 @@ def home():
     if user['registered'] == 0:
         return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl mb-6">Welcome to PulseForge Smart Savings!</h2><a href="/register?id={uid}" class="btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-xl">Complete Registration</a></div></div>"""
 
+    # VIP Level Check
     current_vip = get_vip_level(user['balance'])
     if current_vip > user['vip_level']:
         bonus = get_vip_bonus(current_vip)
@@ -223,6 +207,7 @@ def home():
         conn.commit()
         conn.close()
 
+    # Reward Balance Auto Add
     if user['reward_timestamp'] and user['reward_balance'] > 0:
         reward_time = datetime.fromisoformat(user['reward_timestamp'])
         if datetime.now() - reward_time >= timedelta(hours=24):
@@ -233,68 +218,59 @@ def home():
             conn.commit()
             conn.close()
 
+    # Get Messages for badge
     conn = db()
     c = conn.cursor()
     c.execute("SELECT message FROM messages WHERE user_id=?", (uid,))
     msgs = c.fetchall()
     conn.close()
 
-    badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">{len(msgs)}</span>' if msgs else ''
+    badge = f'<span class="ml-auto bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{len(msgs)}</span>' if msgs else ''
     admin_html = f'<a href="/admin?id={uid}" class="block mt-6 mx-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6 rounded-3xl font-bold text-2xl shadow-2xl neon-purple">🔐 Admin Panel</a>' if uid == ADMIN_ID else ''
 
-    daily_amount = round(user['balance'] * (user.get('daily_profit_percent', 0) / 100), 2)
+    daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
-        <div class="flex justify-center items-center gap-3 mb-8">
-            <span class="text-5xl">🚀</span>
-            <h1 class="text-4xl font-bold neon-purple neon-glow">PulseForge</h1>
-        </div>
-
-        <div class="diamond-glass p-8 text-center mb-8 balance-float" id="balanceCard">
-            <h2 class="text-white/70 text-sm tracking-widest mb-2">YOUR BALANCE</h2>
-            <h1 id="balanceAmount" class="text-6xl font-bold neon-purple neon-glow">0.00</h1>
-            <p class="text-emerald-400 text-sm mt-1">USD</p>
-        </div>
-
-        <div class="glass p-6 mb-8 rounded-3xl">
-            <div class="flex justify-between text-lg mb-3"><div>📈 Daily Profit</div><div class="text-emerald-400 font-semibold">{daily_amount:.2f} USD</div></div>
-            <div class="flex justify-between text-lg mb-3"><div>💰 Total Profit</div><div class="text-emerald-400 font-semibold">{user.get('total_profit', 0):.2f} USD</div></div>
-            <div class="flex justify-between text-lg"><div>🌟 Reward Balance</div><div class="text-purple-400 font-semibold">{max(0, user.get('reward_balance', 0)):.2f} USD</div></div>
-        </div>
-
-        <a href="/profile?id={uid}" onclick="haptic()" class="profile-btn btn neon-blue text-xl mb-4 w-full block">👤 Profile</a>
-        <a href='/deposit?id={uid}' onclick="haptic('heavy')" class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3 w-full block'>Deposit</a>
-        <a href='/withdraw?id={uid}' onclick="haptic('heavy')" class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3 w-full block'>Withdraw</a>
-        <a href='/support?id={uid}&username={username}' onclick="haptic()" class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3 w-full block'>Support</a>
-
-        <div onclick="openMessagesModal(); haptic()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10 rounded-3xl">
-            <h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
-        </div>
-        
-        <div onclick="openVipModal(); haptic()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10 rounded-3xl">
-            <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
-        </div>
-        {admin_html}
+    <div class="flex justify-center items-center gap-3 mb-6"><span class="text-5xl">🚀</span><h1 class="text-4xl font-bold neon-purple glow">PulseForge Smart Savings</h1></div>
+    <div class="glass p-8 text-center mb-8"><h2 class="text-white/70 text-sm tracking-widest mb-1">BALANCE</h2><h1 class="text-6xl font-bold neon-purple">{max(0, user['balance']):.2f} USD</h1></div>
+    <div class="glass p-6 mb-8">
+        <div class="flex justify-between text-lg mb-3"><div>📈 <strong>Daily Profit</strong></div><div class="text-emerald-400 font-semibold">{daily_amount:.2f} USD</div></div>
+        <div class="flex justify-between text-lg mb-3"><div>💰 <strong>Total Profit</strong></div><div class="text-emerald-400 font-semibold">{user['total_profit']:.2f} USD</div></div>
+        <div class="flex justify-between text-lg"><div>🌟 <strong>Reward Balance</strong></div><div class="text-purple-400 font-semibold">{max(0, user['reward_balance']):.2f} USD</div></div>
+    </div>
+    <a href="/profile?id={uid}" class="profile-btn btn neon-blue text-xl mb-4">👤 Profile</a>
+    <a href='/deposit?id={uid}' class='btn bg-gradient-to-r from-yellow-500 to-amber-500 text-white neon-blue text-lg mb-3'>Deposit</a>
+    <a href='/withdraw?id={uid}' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg mb-3'>Withdraw</a>
+    <a href='/support?id={uid}&username={username}' class='btn bg-gradient-to-r from-blue-500 to-cyan-500 text-white neon-blue text-lg mb-3'>Support</a>
+    
+    <div onclick="openMessagesModal()" class="glass p-5 mt-8 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">📩 Messages</h3>{badge}
+    </div>
+    
+    <div onclick="openVipModal()" class="glass p-5 mt-4 flex items-center justify-between cursor-pointer hover:bg-white/10">
+        <h3 class="text-blue-400 text-xl flex items-center gap-2">🌟 VIP System</h3><span class="text-cyan-400">→</span>
+    </div>
+    {admin_html}
     </div>
 
     <!-- Messages Modal -->
-    <div id="messagesModal" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3 modal">
+    <div id="messagesModal" onclick="if(event.target===this)closeMessagesModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
+      <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">Messages</div>
         <div class="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
-            {''.join([f'<div class="glass p-4 rounded-2xl"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}
+            {''.join([f'<div class="glass p-4"><strong>From Admin/Support:</strong><br>{m[0]}</div>' for m in msgs]) or '<div class="text-center text-gray-400 py-10">No messages yet</div>'}
         </div>
         <div class="p-4 border-t border-gray-700">
-            <button onclick="markAsRead(); haptic()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
+            <button onclick="markAsRead()" class="btn bg-green-500 text-white w-full">Mark All as Read</button>
         </div>
       </div>
     </div>
 
     <!-- VIP Modal -->
     <div id="vipModal" onclick="if(event.target===this)closeVipModal()" class="hidden fixed inset-0 bg-black/90 flex items-end z-[9999]">
-      <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3 modal">
+      <div onclick="event.stopImmediatePropagation()" class="diamond-glass w-full max-w-md mx-auto rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl mb-3">
         <div class="w-14 h-1.5 bg-gray-400 rounded-full mx-auto mt-4 mb-1"></div>
         <div class="px-6 pb-4 text-center text-xl font-semibold">🎁 VIP Rewards Program</div>
         <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-6 text-white text-sm">
@@ -311,42 +287,31 @@ def home():
     </div>
 
     <script>
-    function openMessagesModal() {{
-        const modal = document.getElementById('messagesModal');
-        modal.classList.remove('hidden'); modal.classList.add('flex');
-        gsap.fromTo(".modal", {{ y: 200, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.6, ease: "back.out(1.2)" }});
+    function openMessagesModal() {{ 
+        document.getElementById('messagesModal').classList.remove('hidden'); 
+        document.getElementById('messagesModal').classList.add('flex'); 
     }}
-    function closeMessagesModal() {{
-        const modal = document.getElementById('messagesModal');
-        gsap.to(".modal", {{ y: 200, opacity: 0, duration: 0.4, onComplete: () => {{ modal.classList.add('hidden'); modal.classList.remove('flex'); }}});
+    function closeMessagesModal() {{ 
+        document.getElementById('messagesModal').classList.add('hidden'); 
+        document.getElementById('messagesModal').classList.remove('flex'); 
     }}
-    function openVipModal() {{
-        const modal = document.getElementById('vipModal');
-        modal.classList.remove('hidden'); modal.classList.add('flex');
-        gsap.fromTo(".modal", {{ y: 200, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.6, ease: "back.out(1.2)" }});
+    function openVipModal() {{ 
+        document.getElementById('vipModal').classList.remove('hidden'); 
+        document.getElementById('vipModal').classList.add('flex'); 
     }}
-    function closeVipModal() {{
-        const modal = document.getElementById('vipModal');
-        gsap.to(".modal", {{ y: 200, opacity: 0, duration: 0.4, onComplete: () => {{ modal.classList.add('hidden'); modal.classList.remove('flex'); }}});
+    function closeVipModal() {{ 
+        document.getElementById('vipModal').classList.add('hidden'); 
+        document.getElementById('vipModal').classList.remove('flex'); 
     }}
+    
     function markAsRead() {{
         const uid = new URLSearchParams(window.location.search).get('id');
-        fetch('/clear_messages?id=' + uid).then(() => {{ closeMessagesModal(); location.reload(); }});
-    }}
-
-    function animateBalance() {{
-        const el = document.getElementById('balanceAmount');
-        const target = {max(0, user['balance']):.2f};
-        let count = 0;
-        gsap.to({{value: 0}}, {{
-            duration: 2.5, value: target, ease: "power2.out",
-            onUpdate: function() {{ count = this.targets()[0].value; el.textContent = count.toFixed(2); }}
-        }});
-    }}
-
-    window.onload = function() {{
-        animateBalance();
-        gsap.from(".diamond-glass", {{ opacity: 0, y: 40, duration: 1.2, stagger: 0.15, ease: "power3.out" }});
+        fetch('/clear_messages?id=' + uid)
+            .then(() => {{
+                closeMessagesModal();
+                location.reload();
+            }})
+            .catch(() => location.reload());
     }}
     </script>
     """
@@ -373,7 +338,8 @@ def profile():
     c.execute("SELECT * FROM users WHERE id=?", (uid,))
     user = c.fetchone()
     conn.close()
-    daily_amount = round(user['balance'] * (user.get('daily_profit_percent', 0) / 100), 2)
+
+    daily_amount = round(user['balance'] * (user['daily_profit_percent'] / 100), 2)
 
     html = f"""{ui()}
     <div class="max-w-md mx-auto p-5 min-h-screen">
@@ -382,13 +348,13 @@ def profile():
             <div class="space-y-6 text-lg">
                 <div class="flex justify-between"><span class="text-white/80">Main Balance</span><span class="text-blue-300 font-bold">{max(0, user['balance']):.2f} USD</span></div>
                 <div class="flex justify-between"><span class="text-white/80">Daily Profit</span><span class="text-emerald-400 font-bold">{daily_amount:.2f} USD</span></div>
-                <div class="flex justify-between"><span class="text-white/80">Total Profit</span><span class="text-emerald-400 font-bold">{user.get('total_profit', 0):.2f} USD</span></div>
-                <div class="flex justify-between"><span class="text-white/80">Reward Balance</span><span class="text-purple-400 font-bold">{max(0, user.get('reward_balance', 0)):.2f} USD</span></div>
-                <div class="flex justify-between"><span class="text-white/80">VIP Level</span><span class="text-purple-400 font-bold">VIP {user.get('vip_level', 0)}</span></div>
-                <div class="flex justify-between"><span class="text-white/80">Daily Profit %</span><span class="text-teal-400 font-bold">{user.get('daily_profit_percent', 0)}%</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Total Profit</span><span class="text-emerald-400 font-bold">{user['total_profit']:.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Reward Balance</span><span class="text-purple-400 font-bold">{max(0, user['reward_balance']):.2f} USD</span></div>
+                <div class="flex justify-between"><span class="text-white/80">VIP Level</span><span class="text-purple-400 font-bold">VIP {user['vip_level']}</span></div>
+                <div class="flex justify-between"><span class="text-white/80">Daily Profit %</span><span class="text-teal-400 font-bold">{user['daily_profit_percent']}%</span></div>
             </div>
         </div>
-        <a href="/?id={uid}" onclick="haptic()" class="btn bg-gray-500 text-white mt-10 w-full block">← Back to Home</a>
+        <a href="/?id={uid}" class="btn bg-gray-500 text-white mt-10">← Back to Home</a>
     </div>
     """
     return html
@@ -398,16 +364,13 @@ def profile():
 def manage():
     uid = request.args.get("uid")
     return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-xl mb-6">Manage User {uid}</h2>
-    <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic('heavy')" class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic('heavy')" class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/remove_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Reward Balance' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic('heavy')" class='btn bg-red-500 w-full'>Remove Reward Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic('heavy')" class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic()" class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/set_daily_profit'><input type='hidden' name='uid' value='{uid}'><input name='percent' placeholder='Daily Profit % (e.g. 2.5)' class='text-black w-full p-3 rounded mb-3'><button onclick="haptic()" class='btn bg-teal-500 w-full'>Set Daily Profit %</button></form></div>
-    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button onclick="haptic()" class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
-
-# ====================== Other Routes (Add, Remove, Support, Admin, Deposit, Withdraw, etc.) ======================
-# (সব রুট একই রাখা হয়েছে)
+    <div class="glass p-6"><form action='/add'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-green-500 w-full'>Add Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/add_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Add Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-purple-500 w-full'>Add Reward Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/remove_reward'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Reward Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Reward Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/remove'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Remove Main Balance' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-red-500 w-full'>Remove Main Balance</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/profit'><input type='hidden' name='uid' value='{uid}'><input name='p' placeholder='Profit % (e.g. 5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-blue-500 w-full'>Add Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/set_daily_profit'><input type='hidden' name='uid' value='{uid}'><input name='percent' placeholder='Daily Profit % (e.g. 2.5)' class='text-black w-full p-3 rounded mb-3'><button class='btn bg-teal-500 w-full'>Set Daily Profit %</button></form></div>
+    <div class="glass mt-3 p-6"><form action='/msg'><input type='hidden' name='uid' value='{uid}'><textarea name='m' placeholder="Type message for user..." rows="3" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 text-white w-full'>Send Message</button></form></div></div>"""
 
 @app.route("/set_daily_profit")
 def set_daily_profit():
@@ -419,6 +382,17 @@ def set_daily_profit():
     conn.commit()
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Daily Profit {percent}% Set</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
+
+@app.route("/remove_reward")
+def remove_reward():
+    uid = request.args.get("uid")
+    amount = float(request.args.get("amount", 0))
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET reward_balance = reward_balance - ? WHERE id=?", (amount, uid))
+    conn.commit()
+    conn.close()
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
 @app.route("/add")
 def add():
@@ -453,17 +427,6 @@ def remove():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
 
-@app.route("/remove_reward")
-def remove_reward():
-    uid = request.args.get("uid")
-    amount = float(request.args.get("amount", 0))
-    conn = db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET reward_balance = reward_balance - ? WHERE id=?", (amount, uid))
-    conn.commit()
-    conn.close()
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ {amount} USD Removed from Reward</h2><a href="/admin?id={ADMIN_ID}" class="btn bg-green-500 text-white">Back to Admin</a></div></div>"""
-
 @app.route("/profit")
 def profit():
     uid = request.args.get("uid")
@@ -490,7 +453,7 @@ def msg():
 def support():
     uid = request.args.get("id")
     username = request.args.get("username") or "unknown"
-    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2><form action='/send_support'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='username' value='{username}'><textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea><button onclick="haptic()" class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white'>Send to Admin</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen"><div class="glass p-8 rounded-3xl"><h2 class="text-blue-400 text-2xl text-center mb-6">📩 Support</h2><form action='/send_support'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='username' value='{username}'><textarea name='msg' rows="5" placeholder='Type your message here...' class='text-black w-full p-4 rounded-2xl mb-6'></textarea><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white'>Send to Admin</button></form></div></div>"""
 
 @app.route("/send_support")
 def send_support():
@@ -538,7 +501,7 @@ def admin():
     <a href='/all_user_info' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center mb-4'>👥 All User Info</a>
     <a href='/deposits' class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue text-lg flex justify-between items-center'>Pending Deposits {badge_dep}</a>
     <a href='/withdraws' class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white neon-blue text-lg flex justify-between items-center'>Pending Withdraws {badge_wd}</a>
-    <div class="glass mt-6 p-6"><h3 class="text-blue-400 mb-3">Broadcast to All Users</h3><form action='/broadcast'><textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea><button onclick="haptic()" class='btn bg-blue-500 w-full'>Send Broadcast</button></form></div>
+    <div class="glass mt-6 p-6"><h3 class="text-blue-400 mb-3">Broadcast to All Users</h3><form action='/broadcast'><textarea name='m' placeholder="Type message here..." rows="4" class='text-black w-full p-3 rounded mb-3'></textarea><button class='btn bg-blue-500 w-full'>Send Broadcast</button></form></div>
     <div class="glass mt-4 p-6"><h3 class="text-blue-400 mb-3">All Users</h3><div class="space-y-3">{user_list_html}</div></div>
     <div onclick="openSupportModal()" class="glass mt-4 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10"><h3 class="text-blue-400 text-lg flex items-center gap-2">📩 Support Inbox</h3>{badge_support}</div>
     </div>
@@ -556,9 +519,6 @@ def admin():
     """
     return html
 
-# ====================== All other routes (all_user_info, deposit, withdraw, approve, reject, broadcast etc.) ======================
-# (এখানে সব রুট যোগ করা হয়েছে — তোমার আগের ফাইলের মতোই)
-
 @app.route("/all_user_info")
 def all_user_info():
     conn = db()
@@ -569,11 +529,11 @@ def all_user_info():
     user_html = "".join([f"""<div class="glass p-5 mb-4"><p><strong>ID:</strong> {u['id']}</p><p><strong>Name:</strong> {u['name'] or 'N/A'}</p><p><strong>Email:</strong> {u['email'] or 'N/A'}</p><p><strong>Phone:</strong> {u['phone'] or 'N/A'}</p><p><strong>Address:</strong> {u['address'] or 'N/A'}</p><p><strong>Balance:</strong> {u['balance']:.2f} USD</p></div>""" for u in users])
     return f"""{ui()}<div class="max-w-md mx-auto p-4"><h2 class="text-blue-400 text-center text-3xl mb-6">👥 All User Information</h2><div class="space-y-4">{user_html or '<div class="glass p-8 text-center text-gray-400">No registered users yet</div>'}</div><a href="/admin?id={ADMIN_ID}" class="btn bg-gray-500 text-white mt-6">← Back to Admin Panel</a></div>"""
 
-# Deposit Routes
+# ====================== DEPOSIT ======================
 @app.route("/deposit")
 def deposit():
     uid = request.args.get("id")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button onclick="haptic()" class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Next</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/dep2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Next</button></form></div></div>"""
 
 @app.route("/dep2")
 def dep2():
@@ -581,7 +541,7 @@ def dep2():
     net = request.args.get("network")
     amount = request.args.get("amount")
     addr = TRC if net == "TRC20" else ERC
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button onclick="haptic()" class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Submit</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8">Send {amount} to:<br><span class="text-emerald-400 break-all">{addr}</span><form action='/dep3'><input type='hidden' name='uid' value='{uid}'><input type='hidden' name='amount' value='{amount}'><input type='hidden' name='network' value='{net}'><input name='txid' placeholder='TXID' class='text-black w-full p-3 rounded mt-4'><button class='btn bg-gradient-to-r from-blue-500 to-purple-500 text-white neon-blue'>Submit</button></form></div></div>"""
 
 @app.route("/dep3")
 def dep3():
@@ -592,11 +552,11 @@ def dep3():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Deposit Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# Withdraw Routes
+# ====================== WITHDRAW ======================
 @app.route("/withdraw")
 def withdraw():
     uid = request.args.get("id")
-    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/w2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><input name='address' placeholder='Wallet Address' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button onclick="haptic('heavy')" class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white'>Submit</button></form></div></div>"""
+    return f"""{ui()}<div class="max-w-md mx-auto p-4"><div class="glass p-8"><form action='/w2'><input type='hidden' name='uid' value='{uid}'><input name='amount' placeholder='Amount' class='text-black w-full p-3 rounded mb-3'><input name='address' placeholder='Wallet Address' class='text-black w-full p-3 rounded mb-3'><select name='network' class='text-black w-full p-3 rounded mb-3'><option>TRC20</option><option>ERC20</option></select><button class='btn bg-gradient-to-r from-red-500 to-rose-600 text-white'>Submit</button></form></div></div>"""
 
 @app.route("/w2")
 def w2():
@@ -607,7 +567,7 @@ def w2():
     conn.close()
     return f"""{ui()}<div class="max-w-md mx-auto p-5 min-h-screen flex items-center justify-center text-center"><div class="glass"><h2 class="text-green-400 text-3xl mb-4">✅ Withdraw Request Submitted</h2><a href="/?id={request.args.get('uid')}" class="btn bg-green-500 text-white">Back to Home</a></div></div>"""
 
-# Admin Deposit & Withdraw Management Routes (approve, reject etc.)
+# ====================== DEPOSITS & WITHDRAWS ADMIN ======================
 @app.route("/deposits")
 def deposits():
     conn = db()
